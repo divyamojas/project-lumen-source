@@ -10,11 +10,31 @@ from supabase import acreate_client
 from app.routes import entries
 
 
+def _require_supabase_url() -> str:
+    url = os.getenv("SUPABASE_URL")
+    if not url:
+        raise RuntimeError("SUPABASE_URL is required")
+    return url
+
+
+def _require_supabase_key() -> str:
+    key = (
+        os.getenv("SUPABASE_SECRET_KEY")
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("SUPABASE_KEY")
+    )
+    if not key:
+        raise RuntimeError(
+            "Set SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY"
+        )
+    return key
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.supabase = await acreate_client(
-        os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_SECRET_KEY"),
+        _require_supabase_url(),
+        _require_supabase_key(),
     )
     yield
 

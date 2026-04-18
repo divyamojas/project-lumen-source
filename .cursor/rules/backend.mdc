@@ -22,7 +22,8 @@ Runs in Docker (lumen-api, port 8000). Connects to Supabase via Python client.
 
 ## Auth
 Every protected route uses `Depends(get_current_user)`.
-`user_id` is always from the verified JWT `sub` claim — never from the request body.
+Verify JWTs with JWKS for modern Supabase signing keys; use legacy HS256 fallbacks only when necessary.
+`user_id` is always from verified auth identity, never from the request body.
 
 ## Rules (non-negotiable)
 - No ORM — Supabase Python client only
@@ -34,8 +35,12 @@ Every protected route uses `Depends(get_current_user)`.
 
 ## Environment Variables (from .env)
 - `SUPABASE_URL`
-- `SUPABASE_SECRET_KEY` — secret/service-role key, not publishable; bypasses RLS
-- `SUPABASE_JWT_SECRET`
+- `SUPABASE_SECRET_KEY` — preferred hosted backend key (`sb_secret_...`)
+- `SUPABASE_PUBLISHABLE_KEY` — preferred public key (`sb_publishable_...`)
+- `SUPABASE_JWKS_URL` — optional override
+- `SUPABASE_SERVICE_ROLE_KEY` — optional legacy fallback
+- `SUPABASE_ANON_KEY` — optional legacy fallback
+- `SUPABASE_JWT_SECRET` — optional legacy HS256 fallback
 
 ## Out of Scope (Phase 1)
 Do not implement: frontend wiring, S3, Lambda, Bedrock, Comprehend.

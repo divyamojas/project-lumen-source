@@ -22,14 +22,14 @@ requirements.txt  — fastapi, uvicorn, supabase, PyJWT, python-dotenv, pydantic
 - Python 3.11
 - FastAPI
 - Supabase (Postgres + Auth)
-- PyJWT — verifies Supabase-issued JWTs locally (no round-trip to Supabase on every request)
+- PyJWT — verifies Supabase-issued JWTs using JWKS for modern signing keys, with legacy HS256 compatibility
 
 ## Planned File Structure
 ```
 project-lumen-source/
   app/
     main.py           # FastAPI app init, CORS, router registration
-    auth.py           # JWT verification dependency
+  auth.py           # JWT verification dependency
     routes/
       entries.py      # CRUD for journal entries
     models/
@@ -42,26 +42,24 @@ project-lumen-source/
 ## Auth Pattern
 Every protected route uses a FastAPI dependency that:
 1. Extracts the `Authorization: Bearer <token>` header
-2. Verifies the JWT using `SUPABASE_JWT_SECRET` via PyJWT
-3. Returns the decoded payload — `user_id` is read from there
+2. Verifies the JWT with PyJWT
+3. Uses Supabase JWKS (`/auth/v1/.well-known/jwks.json`) for modern asymmetric signing keys
+4. Falls back to `SUPABASE_JWT_SECRET` only for legacy HS256 setups
+5. For HS256 projects without the shared secret, verifies the token with `GET /auth/v1/user` using the public API key
 
 ```python
 from fastapi import Depends, HTTPException, Header
 import jwt
 
 def get_current_user(authorization: str = Header(...)):
-    token = authorization.removeprefix("Bearer ")
-    try:
-        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"])
-        return payload["sub"]  # this is user_id
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    ...
 ```
 
 ## Supabase Usage
 - Use the Supabase Python client directly — no ORM, no SQLAlchemy.
 - All queries are scoped to the authenticated `user_id` extracted from the JWT.
 - Never trust a `user_id` from the request body.
+- Prefer hosted `sb_secret_...` keys on the backend. Legacy `service_role` keys are supported only as a compatibility fallback.
 
 ## Response Rules
 - Return 404 (not 403) when a user's own resource is not found — prevents user enumeration.
@@ -69,8 +67,17 @@ def get_current_user(authorization: str = Header(...)):
 
 ## Environment Variables (from .env)
 - `SUPABASE_URL`
-- `SUPABASE_SECRET_KEY` — secret/service-role key (not publishable); bypasses RLS, appropriate for trusted server
-- `SUPABASE_JWT_SECRET`
+- `SUPABASE_SECRET_KEY` — preferred hosted backend key (`sb_secret_...`), bypasses RLS
+- `SUPABASE_PUBLISHABLE_KEY` — preferred public key (`sb_publishable_...`) used for HS256 fallback verification
+- `SUPABASE_JWKS_URL` — optional override; defaults to `SUPABASE_URL/auth/v1/.well-known/jwks.json`
+- `SUPABASE_SERVICE_ROLE_KEY` — optional legacy fallback for older JWT-based server keys
+- `SUPABASE_ANON_KEY` — optional legacy fallback for older public JWT-based keys
+- `SUPABASE_JWT_SECRET` — optional legacy fallback for projects still using shared-secret HS256 verification
+
+## Supabase Notes
+- Supabase now recommends publishable and secret API keys over legacy `anon` and `service_role` JWT-based keys.
+- Modern Supabase Auth projects can use asymmetric signing keys, so local verification should prefer JWKS rather than a shared JWT secret.
+- The Python client examples in the current docs use `SUPABASE_URL` and `SUPABASE_KEY`; this repo keeps `SUPABASE_SECRET_KEY` for clarity and maps legacy names as fallbacks.
 
 ## Backend-Specific Rules
 - No ORM — Supabase client only.

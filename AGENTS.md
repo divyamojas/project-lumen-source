@@ -2,7 +2,7 @@
 
 ## What This Project Is
 FastAPI backend for the Lumen journaling PWA. Runs in Docker (lumen-api, port 8000).
-Connects to Supabase (Postgres + Auth). Verifies Supabase JWTs locally via PyJWT.
+Connects to Supabase (Postgres + Auth). Verifies Supabase JWTs with PyJWT using JWKS for modern projects and legacy HS256 fallbacks when needed.
 Phase 1 scaffold is complete. Not yet wired to the frontend.
 
 ## Stack
@@ -18,7 +18,7 @@ Phase 1 scaffold is complete. Not yet wired to the frontend.
 
 ## Auth Pattern
 Every protected route uses `get_current_user = Depends(get_current_user)`.
-`user_id` is always taken from the verified JWT payload (`sub` claim) — never from the request body.
+`user_id` is always taken from the verified JWT identity — JWT `sub` for local decode, or the verified Supabase Auth user identity for legacy HS256 fallback — never from the request body.
 
 ## Strict Rules
 - No ORM — use Supabase Python client directly
@@ -46,8 +46,12 @@ collection, checklist, templateId, promptId, relatedEntryIds`
 
 ## Environment Variables (from .env)
 - SUPABASE_URL
-- SUPABASE_SECRET_KEY  — secret/service-role key, not publishable; bypasses RLS
-- SUPABASE_JWT_SECRET
+- SUPABASE_SECRET_KEY  — preferred hosted backend key (`sb_secret_...`)
+- SUPABASE_PUBLISHABLE_KEY  — preferred public key (`sb_publishable_...`) for auth fallback flows
+- SUPABASE_JWKS_URL  — optional override; defaults to `/auth/v1/.well-known/jwks.json`
+- SUPABASE_SERVICE_ROLE_KEY  — optional legacy fallback
+- SUPABASE_ANON_KEY  — optional legacy fallback
+- SUPABASE_JWT_SECRET  — optional legacy HS256 fallback only
 
 ## Permanently Out of Scope (Phase 1)
 - Frontend wiring (Phase 2)
