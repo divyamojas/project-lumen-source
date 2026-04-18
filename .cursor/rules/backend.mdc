@@ -32,5 +32,10 @@ Every protected route uses `Depends(get_current_user)`.
 - Return 401 for missing/invalid JWT
 - CORS: allow http://localhost:3000
 
+## Environment Variables (from .env)
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY` — secret/service-role key, not publishable; bypasses RLS
+- `SUPABASE_JWT_SECRET`
+
 ## Out of Scope (Phase 1)
 Do not implement: frontend wiring, S3, Lambda, Bedrock, Comprehend.

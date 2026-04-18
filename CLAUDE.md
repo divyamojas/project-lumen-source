@@ -67,6 +67,11 @@ def get_current_user(authorization: str = Header(...)):
 - Return 404 (not 403) when a user's own resource is not found — prevents user enumeration.
 - Return 401 for missing or invalid JWT.
 
+## Environment Variables (from .env)
+- `SUPABASE_URL`
+- `SUPABASE_SECRET_KEY` — secret/service-role key (not publishable); bypasses RLS, appropriate for trusted server
+- `SUPABASE_JWT_SECRET`
+
 ## Backend-Specific Rules
 - No ORM — Supabase client only.
 - Pydantic models for all request bodies and responses.

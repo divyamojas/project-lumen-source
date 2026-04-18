@@ -14,7 +14,7 @@ from app.routes import entries
 async def lifespan(app: FastAPI):
     app.state.supabase = await acreate_client(
         os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_ANON_KEY"),
+        os.getenv("SUPABASE_SECRET_KEY"),
     )
     yield
 

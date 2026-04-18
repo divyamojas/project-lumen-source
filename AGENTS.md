@@ -46,7 +46,7 @@ collection, checklist, templateId, promptId, relatedEntryIds`
 
 ## Environment Variables (from .env)
 - SUPABASE_URL
-- SUPABASE_ANON_KEY
+- SUPABASE_SECRET_KEY  — secret/service-role key, not publishable; bypasses RLS
 - SUPABASE_JWT_SECRET
 
 ## Permanently Out of Scope (Phase 1)
