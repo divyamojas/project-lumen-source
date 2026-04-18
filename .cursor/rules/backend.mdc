@@ -1,0 +1,36 @@
+---
+description: Lumen backend rules — apply to all Python files in this repo
+globs: ["**/*.py", "requirements.txt", "Dockerfile"]
+alwaysApply: true
+---
+
+# Lumen Backend
+
+FastAPI service for the Lumen journaling PWA. Phase 1 scaffold complete.
+Runs in Docker (lumen-api, port 8000). Connects to Supabase via Python client.
+
+## Stack
+- Python 3.11, FastAPI, Supabase Python client, PyJWT, Pydantic v2
+- No ORM — Supabase client directly
+- No TypeScript, no local installs — Docker only
+
+## File Map
+- `app/main.py` — app init, CORS, router mount, /health
+- `app/auth.py` — `get_current_user` dependency: verifies JWT, returns user_id (sub claim)
+- `app/routes/entries.py` — CRUD for /entries
+- `app/models/entry.py` — EntryCreate, EntryUpdate, EntryResponse
+
+## Auth
+Every protected route uses `Depends(get_current_user)`.
+`user_id` is always from the verified JWT `sub` claim — never from the request body.
+
+## Rules (non-negotiable)
+- No ORM — Supabase Python client only
+- No hardcoded secrets — all config from env vars (.env, never committed)
+- user_id always from JWT, never from request body
+- Return 404 (not 403) for owned-resource-not-found
+- Return 401 for missing/invalid JWT
+- CORS: allow http://localhost:3000
+
+## Out of Scope (Phase 1)
+Do not implement: frontend wiring, S3, Lambda, Bedrock, Comprehend.
