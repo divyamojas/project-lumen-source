@@ -1,3 +1,4 @@
+import asyncpg
 from fastapi import Depends, HTTPException, Request, status
 from supabase import AsyncClient
 
@@ -8,6 +9,10 @@ ROLE_HIERARCHY = {"user": 1, "admin": 2, "superuser": 3}
 
 def get_supabase(request: Request) -> AsyncClient:
     return request.app.state.supabase
+
+
+def get_db_pool(request: Request) -> asyncpg.Pool:
+    return request.app.state.db_pool
 
 
 def require_role(minimum_role: str):

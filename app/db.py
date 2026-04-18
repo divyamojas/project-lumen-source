@@ -1,0 +1,198 @@
+import asyncpg
+import hashlib
+import json
+import logging
+import os
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+SNAPSHOT_PATH = Path("/app/schema_snapshot.json")
+MIGRATIONS_DIR = Path("/app/migrations")
+
+
+# ── Pool ─────────────────────────────────────────────────────────────────────
+
+async def create_pool() -> asyncpg.Pool:
+    return await asyncpg.create_pool(
+        os.getenv("DATABASE_URL"),
+        min_size=2,
+        max_size=10,
+        command_timeout=30,
+    )
+
+
+# ── Schema snapshot ───────────────────────────────────────────────────────────
+
+async def take_schema_snapshot(pool: asyncpg.Pool) -> dict:
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT
+                t.table_schema,
+                t.table_name,
+                c.column_name,
+                c.data_type,
+                c.udt_name,
+                c.is_nullable,
+                c.column_default,
+                c.ordinal_position
+            FROM information_schema.tables t
+            JOIN information_schema.columns c
+                ON t.table_name = c.table_name
+                AND t.table_schema = c.table_schema
+            WHERE t.table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+                AND t.table_type = 'BASE TABLE'
+            ORDER BY t.table_schema, t.table_name, c.ordinal_position
+        """)
+
+        indexes = await conn.fetch("""
+            SELECT
+                schemaname,
+                tablename,
+                indexname,
+                indexdef
+            FROM pg_indexes
+            WHERE schemaname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+            ORDER BY schemaname, tablename, indexname
+        """)
+
+    tables: dict = {}
+    for row in rows:
+        key = f"{row['table_schema']}.{row['table_name']}"
+        if key not in tables:
+            tables[key] = {
+                "schema": row["table_schema"],
+                "name": row["table_name"],
+                "columns": [],
+                "indexes": [],
+            }
+        tables[key]["columns"].append({
+            "name": row["column_name"],
+            "type": row["data_type"],
+            "udt_name": row["udt_name"],
+            "nullable": row["is_nullable"] == "YES",
+            "default": row["column_default"],
+        })
+
+    for idx in indexes:
+        key = f"{idx['schemaname']}.{idx['tablename']}"
+        if key in tables:
+            tables[key]["indexes"].append({
+                "name": idx["indexname"],
+                "definition": idx["indexdef"],
+            })
+
+    snapshot = {
+        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "tables": tables,
+    }
+
+    SNAPSHOT_PATH.write_text(json.dumps(snapshot, indent=2))
+    logger.info("Schema snapshot written to %s (%d tables)", SNAPSHOT_PATH, len(tables))
+    return snapshot
+
+
+def load_snapshot() -> dict | None:
+    if SNAPSHOT_PATH.exists():
+        return json.loads(SNAPSHOT_PATH.read_text())
+    return None
+
+
+# ── Migrations ────────────────────────────────────────────────────────────────
+
+async def ensure_migrations_table(pool: asyncpg.Pool) -> None:
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                id          SERIAL PRIMARY KEY,
+                filename    TEXT UNIQUE NOT NULL,
+                checksum    TEXT NOT NULL,
+                applied_by  TEXT,
+                applied_at  TIMESTAMPTZ DEFAULT now()
+            )
+        """)
+
+
+def _checksum(sql: str) -> str:
+    return hashlib.md5(sql.encode()).hexdigest()
+
+
+def list_migration_files() -> list[dict]:
+    if not MIGRATIONS_DIR.exists():
+        return []
+    files = sorted(MIGRATIONS_DIR.glob("*.sql"))
+    return [
+        {"filename": f.name, "checksum": _checksum(f.read_text()), "sql": f.read_text()}
+        for f in files
+    ]
+
+
+async def get_applied_migrations(pool: asyncpg.Pool) -> dict[str, dict]:
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT filename, checksum, applied_by, applied_at FROM schema_migrations ORDER BY id"
+        )
+    return {
+        r["filename"]: {
+            "checksum": r["checksum"],
+            "applied_by": r["applied_by"],
+            "applied_at": r["applied_at"].isoformat() if r["applied_at"] else None,
+        }
+        for r in rows
+    }
+
+
+async def apply_migration(
+    pool: asyncpg.Pool, filename: str, sql: str, applied_by: str | None = None
+) -> None:
+    checksum = _checksum(sql)
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute(sql)
+            await conn.execute(
+                """
+                INSERT INTO schema_migrations (filename, checksum, applied_by)
+                VALUES ($1, $2, $3)
+                """,
+                filename, checksum, applied_by,
+            )
+    logger.info("Applied migration: %s", filename)
+
+
+# ── Raw SQL execution ─────────────────────────────────────────────────────────
+
+_SELECT_LIKE = re.compile(r"^\s*(SELECT|WITH|EXPLAIN|SHOW|TABLE)\b", re.IGNORECASE)
+
+
+async def execute_sql(pool: asyncpg.Pool, query: str) -> dict:
+    start = datetime.now(timezone.utc)
+
+    async with pool.acquire() as conn:
+        if _SELECT_LIKE.match(query):
+            records = await conn.fetch(query)
+            rows = [dict(r) for r in records]
+            row_count = len(rows)
+            status = f"SELECT {row_count}"
+        else:
+            status = await conn.execute(query)
+            rows = []
+            parts = status.split()
+            row_count = int(parts[-1]) if parts and parts[-1].isdigit() else 0
+
+    duration_ms = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
+
+    logger.info(
+        "SQL executed | status=%s rows=%d duration_ms=%d query=%.120s",
+        status, row_count, duration_ms, query.replace("\n", " "),
+    )
+
+    return {
+        "query": query,
+        "status": status,
+        "row_count": row_count,
+        "rows": rows,
+        "duration_ms": duration_ms,
+        "executed_at": start.isoformat(),
+    }
