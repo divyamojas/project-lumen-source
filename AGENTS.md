@@ -17,8 +17,16 @@ Phase 1 scaffold is complete. Not yet wired to the frontend.
 - `app/models/entry.py` → EntryCreate, EntryUpdate, EntryResponse Pydantic models
 
 ## Auth Pattern
-Every protected route uses `get_current_user = Depends(get_current_user)`.
-`user_id` is always taken from the verified JWT identity — JWT `sub` for local decode, or the verified Supabase Auth user identity for legacy HS256 fallback — never from the request body.
+Every protected route uses `Depends(get_current_user)` from `app/auth.py`.
+
+Resolution order:
+1. Parse `Authorization: Bearer <token>` header
+2. Peek at token `alg` header (unsigned)
+3. Asymmetric (RS256/ES256): verify via JWKS at `SUPABASE_URL/auth/v1/.well-known/jwks.json`
+4. HS256 + `SUPABASE_JWT_SECRET`: verify locally
+5. HS256 + no secret: verify remotely via `GET /auth/v1/user` with `SUPABASE_PUBLISHABLE_KEY`
+
+Returns `user_id` (JWT `sub`) on success. Never trusts user_id from request body.
 
 ## Strict Rules
 - No ORM — use Supabase Python client directly

@@ -21,9 +21,16 @@ Runs in Docker (lumen-api, port 8000). Connects to Supabase via Python client.
 - `app/models/entry.py` — EntryCreate, EntryUpdate, EntryResponse
 
 ## Auth
-Every protected route uses `Depends(get_current_user)`.
-Verify JWTs with JWKS for modern Supabase signing keys; use legacy HS256 fallbacks only when necessary.
-`user_id` is always from verified auth identity, never from the request body.
+Every protected route uses `Depends(get_current_user)` from `app/auth.py`.
+
+Resolution order:
+1. Parse `Authorization: Bearer <token>` header
+2. Peek at token `alg` header (unsigned)
+3. Asymmetric (RS256/ES256): verify via JWKS at `SUPABASE_URL/auth/v1/.well-known/jwks.json`
+4. HS256 + `SUPABASE_JWT_SECRET`: verify locally with shared secret
+5. HS256 + no secret: verify remotely via `GET /auth/v1/user` with `SUPABASE_PUBLISHABLE_KEY`
+
+Returns `user_id` (JWT `sub`) on success. Never trusts user_id from request body.
 
 ## Rules (non-negotiable)
 - No ORM — Supabase Python client only

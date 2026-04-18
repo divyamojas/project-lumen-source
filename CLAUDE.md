@@ -8,7 +8,7 @@ Not yet wired to the frontend — that comes in Phase 2.
 ```
 app/
   main.py         — FastAPI app, CORS (localhost:3000), router mount, /health
-  auth.py         — get_current_user dependency (PyJWT, HS256)
+  auth.py         — get_current_user dependency (JWKS primary, HS256 fallback)
   routes/
     entries.py    — POST/GET/GET{id}/PATCH{id}/DELETE{id} /entries
   models/
@@ -24,36 +24,17 @@ requirements.txt  — fastapi, uvicorn, supabase, PyJWT, python-dotenv, pydantic
 - Supabase (Postgres + Auth)
 - PyJWT — verifies Supabase-issued JWTs using JWKS for modern signing keys, with legacy HS256 compatibility
 
-## Planned File Structure
-```
-project-lumen-source/
-  app/
-    main.py           # FastAPI app init, CORS, router registration
-  auth.py           # JWT verification dependency
-    routes/
-      entries.py      # CRUD for journal entries
-    models/
-      entry.py        # Pydantic request/response models
-  Dockerfile
-  requirements.txt
-  .env
-```
-
 ## Auth Pattern
-Every protected route uses a FastAPI dependency that:
-1. Extracts the `Authorization: Bearer <token>` header
-2. Verifies the JWT with PyJWT
-3. Uses Supabase JWKS (`/auth/v1/.well-known/jwks.json`) for modern asymmetric signing keys
-4. Falls back to `SUPABASE_JWT_SECRET` only for legacy HS256 setups
-5. For HS256 projects without the shared secret, verifies the token with `GET /auth/v1/user` using the public API key
+Every protected route uses `Depends(get_current_user)` from `app/auth.py`.
 
-```python
-from fastapi import Depends, HTTPException, Header
-import jwt
+Resolution order:
+1. Read `Authorization: Bearer <token>` header
+2. Peek at the token's `alg` header (no signature check yet)
+3. If asymmetric (RS256/ES256): verify via Supabase JWKS — `SUPABASE_URL/auth/v1/.well-known/jwks.json` (or `SUPABASE_JWKS_URL` override)
+4. If HS256 + `SUPABASE_JWT_SECRET` set: verify locally with shared secret
+5. If HS256 + no secret: verify remotely via `GET /auth/v1/user` using `SUPABASE_PUBLISHABLE_KEY`
 
-def get_current_user(authorization: str = Header(...)):
-    ...
-```
+Returns `user_id` (the JWT `sub` claim) on success, raises `401` on failure.
 
 ## Supabase Usage
 - Use the Supabase Python client directly — no ORM, no SQLAlchemy.
