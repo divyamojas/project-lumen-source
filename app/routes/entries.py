@@ -1,6 +1,5 @@
-import os
-from fastapi import APIRouter, Depends, HTTPException
-from supabase import create_client, Client
+from fastapi import APIRouter, Depends, HTTPException, Request
+from supabase import AsyncClient
 
 from app.auth import get_current_user
 from app.models.entry import EntryCreate, EntryUpdate, EntryResponse
@@ -8,28 +7,31 @@ from app.models.entry import EntryCreate, EntryUpdate, EntryResponse
 router = APIRouter(prefix="/entries", tags=["entries"])
 
 
-def get_supabase() -> Client:
-    return create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
+def get_supabase(request: Request) -> AsyncClient:
+    return request.app.state.supabase
 
 
 @router.post("", response_model=EntryResponse, status_code=201)
-def create_entry(entry: EntryCreate, user_id: str = Depends(get_current_user)):
-    supabase = get_supabase()
+async def create_entry(
+    entry: EntryCreate,
+    supabase: AsyncClient = Depends(get_supabase),
+    user_id: str = Depends(get_current_user),
+):
     data = {**entry.model_dump(), "user_id": user_id}
-    result = supabase.table("entries").insert(data).execute()
+    result = await supabase.table("entries").insert(data).execute()
     return result.data[0]
 
 
 @router.get("", response_model=list[EntryResponse])
-def list_entries(
+async def list_entries(
     page: int = 1,
     page_size: int = 20,
+    supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
-    supabase = get_supabase()
     offset = (page - 1) * page_size
     result = (
-        supabase.table("entries")
+        await supabase.table("entries")
         .select("*")
         .eq("user_id", user_id)
         .order("createdAt", desc=True)
@@ -40,14 +42,17 @@ def list_entries(
 
 
 @router.get("/{entry_id}", response_model=EntryResponse)
-def get_entry(entry_id: str, user_id: str = Depends(get_current_user)):
-    supabase = get_supabase()
+async def get_entry(
+    entry_id: str,
+    supabase: AsyncClient = Depends(get_supabase),
+    user_id: str = Depends(get_current_user),
+):
     result = (
-        supabase.table("entries")
+        await supabase.table("entries")
         .select("*")
         .eq("id", entry_id)
         .eq("user_id", user_id)
-        .single()
+        .maybe_single()
         .execute()
     )
     if not result.data:
@@ -56,40 +61,43 @@ def get_entry(entry_id: str, user_id: str = Depends(get_current_user)):
 
 
 @router.patch("/{entry_id}", response_model=EntryResponse)
-def update_entry(
+async def update_entry(
     entry_id: str,
     patch: EntryUpdate,
+    supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
-    supabase = get_supabase()
     existing = (
-        supabase.table("entries")
+        await supabase.table("entries")
         .select("id")
         .eq("id", entry_id)
         .eq("user_id", user_id)
-        .single()
+        .maybe_single()
         .execute()
     )
     if not existing.data:
         raise HTTPException(status_code=404, detail="Entry not found")
 
-    updates = {k: v for k, v in patch.model_dump().items() if v is not None}
-    result = supabase.table("entries").update(updates).eq("id", entry_id).execute()
+    updates = patch.model_dump(exclude_unset=True)
+    result = await supabase.table("entries").update(updates).eq("id", entry_id).execute()
     return result.data[0]
 
 
 @router.delete("/{entry_id}", status_code=204)
-def delete_entry(entry_id: str, user_id: str = Depends(get_current_user)):
-    supabase = get_supabase()
+async def delete_entry(
+    entry_id: str,
+    supabase: AsyncClient = Depends(get_supabase),
+    user_id: str = Depends(get_current_user),
+):
     existing = (
-        supabase.table("entries")
+        await supabase.table("entries")
         .select("id")
         .eq("id", entry_id)
         .eq("user_id", user_id)
-        .single()
+        .maybe_single()
         .execute()
     )
     if not existing.data:
         raise HTTPException(status_code=404, detail="Entry not found")
 
-    supabase.table("entries").delete().eq("id", entry_id).execute()
+    await supabase.table("entries").delete().eq("id", entry_id).execute()
