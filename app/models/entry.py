@@ -95,3 +95,11 @@ class EntryResponse(BaseModel):
     templateId: str
     promptId: str
     relatedEntryIds: list[str]
+
+
+class EntryListResponse(BaseModel):
+    data: list[EntryResponse]
+    total: int
+    page: int
+    page_size: int
+    has_next: bool

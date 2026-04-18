@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from supabase import AsyncClient
 
 from app.auth import get_current_user
-from app.models.entry import EntryCreate, EntryUpdate, EntryResponse
+from app.models.entry import EntryCreate, EntryListResponse, EntryResponse, EntryUpdate
 
 router = APIRouter(prefix="/entries", tags=["entries"])
 
@@ -22,23 +24,51 @@ async def create_entry(
     return result.data[0]
 
 
-@router.get("", response_model=list[EntryResponse])
+@router.get("", response_model=EntryListResponse)
 async def list_entries(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    tag: Optional[str] = Query(default=None),
+    collection: Optional[str] = Query(default=None),
+    favorite: Optional[bool] = Query(default=None),
+    pinned: Optional[bool] = Query(default=None),
+    from_date: Optional[str] = Query(default=None, description="ISO date — createdAt >="),
+    to_date: Optional[str] = Query(default=None, description="ISO date — createdAt <="),
     supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
     offset = (page - 1) * page_size
-    result = (
-        await supabase.table("entries")
-        .select("*")
+
+    query = (
+        supabase.table("entries")
+        .select("*", count="exact")
         .eq("user_id", user_id)
         .order("createdAt", desc=True)
-        .range(offset, offset + page_size - 1)
-        .execute()
     )
-    return result.data
+
+    if tag is not None:
+        query = query.contains("tags", [tag])
+    if collection is not None:
+        query = query.eq("collection", collection)
+    if favorite is not None:
+        query = query.eq("favorite", favorite)
+    if pinned is not None:
+        query = query.eq("pinned", pinned)
+    if from_date is not None:
+        query = query.gte("createdAt", from_date)
+    if to_date is not None:
+        query = query.lte("createdAt", to_date)
+
+    result = await query.range(offset, offset + page_size - 1).execute()
+
+    total = result.count or 0
+    return EntryListResponse(
+        data=result.data,
+        total=total,
+        page=page,
+        page_size=page_size,
+        has_next=(offset + page_size) < total,
+    )
 
 
 @router.get("/{entry_id}", response_model=EntryResponse)
@@ -67,19 +97,16 @@ async def update_entry(
     supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
-    existing = (
+    updates = patch.model_dump(exclude_unset=True)
+    result = (
         await supabase.table("entries")
-        .select("id")
+        .update(updates)
         .eq("id", entry_id)
         .eq("user_id", user_id)
-        .maybe_single()
         .execute()
     )
-    if not existing.data:
+    if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
-
-    updates = patch.model_dump(exclude_unset=True)
-    result = await supabase.table("entries").update(updates).eq("id", entry_id).execute()
     return result.data[0]
 
 
@@ -89,15 +116,12 @@ async def delete_entry(
     supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
-    existing = (
+    result = (
         await supabase.table("entries")
-        .select("id")
+        .delete()
         .eq("id", entry_id)
         .eq("user_id", user_id)
-        .maybe_single()
         .execute()
     )
-    if not existing.data:
+    if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
-
-    await supabase.table("entries").delete().eq("id", entry_id).execute()

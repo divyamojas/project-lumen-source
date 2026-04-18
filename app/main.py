@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import acreate_client
 
-from app.routes import entries
+from app.routes import entries, users
 
 
 def _require_supabase_url() -> str:
@@ -50,6 +50,7 @@ app.add_middleware(
 )
 
 app.include_router(entries.router)
+app.include_router(users.router)
 
 
 @app.get("/health")
