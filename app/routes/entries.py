@@ -1,16 +1,13 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import AsyncClient
 
 from app.auth import get_current_user
+from app.dependencies import get_supabase
 from app.models.entry import EntryCreate, EntryListResponse, EntryResponse, EntryUpdate
 
 router = APIRouter(prefix="/entries", tags=["entries"])
-
-
-def get_supabase(request: Request) -> AsyncClient:
-    return request.app.state.supabase
 
 
 @router.post("", response_model=EntryResponse, status_code=201)
