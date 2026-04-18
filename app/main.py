@@ -32,6 +32,12 @@ async def lifespan(app: FastAPI):
     try:
         app.state.db_pool = await db.create_pool()
         await db.ensure_migrations_table(app.state.db_pool)
+        await db.apply_all_pending(app.state.db_pool)
+
+        bootstrap_id = os.getenv("BOOTSTRAP_SUPERUSER_ID")
+        if bootstrap_id:
+            await db.bootstrap_superuser(app.state.db_pool, bootstrap_id)
+
         await db.take_schema_snapshot(app.state.db_pool)
     except Exception as exc:
         import logging

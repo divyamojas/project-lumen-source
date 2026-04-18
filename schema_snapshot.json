@@ -1,0 +1,3381 @@
+{
+  "captured_at": "2026-04-18T16:06:09.481511+00:00",
+  "tables": {
+    "auth.audit_log_entries": {
+      "schema": "auth",
+      "name": "audit_log_entries",
+      "columns": [
+        {
+          "name": "instance_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "payload",
+          "type": "json",
+          "udt_name": "json",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "ip_address",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": "''::character varying"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "audit_log_entries_pkey",
+          "definition": "CREATE UNIQUE INDEX audit_log_entries_pkey ON auth.audit_log_entries USING btree (id)"
+        },
+        {
+          "name": "audit_logs_instance_id_idx",
+          "definition": "CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id)"
+        }
+      ]
+    },
+    "auth.custom_oauth_providers": {
+      "schema": "auth",
+      "name": "custom_oauth_providers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "provider_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "identifier",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_secret",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "acceptable_client_ids",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": false,
+          "default": "'{}'::text[]"
+        },
+        {
+          "name": "scopes",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": false,
+          "default": "'{}'::text[]"
+        },
+        {
+          "name": "pkce_enabled",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "attribute_mapping",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "authorization_params",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "true"
+        },
+        {
+          "name": "email_optional",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "issuer",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "discovery_url",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "skip_nonce_check",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "cached_discovery",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "discovery_cached_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "authorization_url",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "token_url",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "userinfo_url",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "jwks_uri",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "custom_oauth_providers_created_at_idx",
+          "definition": "CREATE INDEX custom_oauth_providers_created_at_idx ON auth.custom_oauth_providers USING btree (created_at)"
+        },
+        {
+          "name": "custom_oauth_providers_enabled_idx",
+          "definition": "CREATE INDEX custom_oauth_providers_enabled_idx ON auth.custom_oauth_providers USING btree (enabled)"
+        },
+        {
+          "name": "custom_oauth_providers_identifier_idx",
+          "definition": "CREATE INDEX custom_oauth_providers_identifier_idx ON auth.custom_oauth_providers USING btree (identifier)"
+        },
+        {
+          "name": "custom_oauth_providers_identifier_key",
+          "definition": "CREATE UNIQUE INDEX custom_oauth_providers_identifier_key ON auth.custom_oauth_providers USING btree (identifier)"
+        },
+        {
+          "name": "custom_oauth_providers_pkey",
+          "definition": "CREATE UNIQUE INDEX custom_oauth_providers_pkey ON auth.custom_oauth_providers USING btree (id)"
+        },
+        {
+          "name": "custom_oauth_providers_provider_type_idx",
+          "definition": "CREATE INDEX custom_oauth_providers_provider_type_idx ON auth.custom_oauth_providers USING btree (provider_type)"
+        }
+      ]
+    },
+    "auth.flow_state": {
+      "schema": "auth",
+      "name": "flow_state",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "auth_code",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "code_challenge_method",
+          "type": "USER-DEFINED",
+          "udt_name": "code_challenge_method",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "code_challenge",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "provider_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "provider_access_token",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "provider_refresh_token",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "authentication_method",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "auth_code_issued_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "invite_token",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "referrer",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "oauth_client_state_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "linking_target_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_optional",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "flow_state_created_at_idx",
+          "definition": "CREATE INDEX flow_state_created_at_idx ON auth.flow_state USING btree (created_at DESC)"
+        },
+        {
+          "name": "flow_state_pkey",
+          "definition": "CREATE UNIQUE INDEX flow_state_pkey ON auth.flow_state USING btree (id)"
+        },
+        {
+          "name": "idx_auth_code",
+          "definition": "CREATE INDEX idx_auth_code ON auth.flow_state USING btree (auth_code)"
+        },
+        {
+          "name": "idx_user_id_auth_method",
+          "definition": "CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method)"
+        }
+      ]
+    },
+    "auth.identities": {
+      "schema": "auth",
+      "name": "identities",
+      "columns": [
+        {
+          "name": "provider_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "identity_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "provider",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "last_sign_in_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "identities_email_idx",
+          "definition": "CREATE INDEX identities_email_idx ON auth.identities USING btree (email text_pattern_ops)"
+        },
+        {
+          "name": "identities_pkey",
+          "definition": "CREATE UNIQUE INDEX identities_pkey ON auth.identities USING btree (id)"
+        },
+        {
+          "name": "identities_provider_id_provider_unique",
+          "definition": "CREATE UNIQUE INDEX identities_provider_id_provider_unique ON auth.identities USING btree (provider_id, provider)"
+        },
+        {
+          "name": "identities_user_id_idx",
+          "definition": "CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id)"
+        }
+      ]
+    },
+    "auth.instances": {
+      "schema": "auth",
+      "name": "instances",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "uuid",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "raw_base_config",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "instances_pkey",
+          "definition": "CREATE UNIQUE INDEX instances_pkey ON auth.instances USING btree (id)"
+        }
+      ]
+    },
+    "auth.mfa_amr_claims": {
+      "schema": "auth",
+      "name": "mfa_amr_claims",
+      "columns": [
+        {
+          "name": "session_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "authentication_method",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "amr_id_pk",
+          "definition": "CREATE UNIQUE INDEX amr_id_pk ON auth.mfa_amr_claims USING btree (id)"
+        },
+        {
+          "name": "mfa_amr_claims_session_id_authentication_method_pkey",
+          "definition": "CREATE UNIQUE INDEX mfa_amr_claims_session_id_authentication_method_pkey ON auth.mfa_amr_claims USING btree (session_id, authentication_method)"
+        }
+      ]
+    },
+    "auth.mfa_challenges": {
+      "schema": "auth",
+      "name": "mfa_challenges",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "factor_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "verified_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "ip_address",
+          "type": "inet",
+          "udt_name": "inet",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "otp_code",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "web_authn_session_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "mfa_challenge_created_at_idx",
+          "definition": "CREATE INDEX mfa_challenge_created_at_idx ON auth.mfa_challenges USING btree (created_at DESC)"
+        },
+        {
+          "name": "mfa_challenges_pkey",
+          "definition": "CREATE UNIQUE INDEX mfa_challenges_pkey ON auth.mfa_challenges USING btree (id)"
+        }
+      ]
+    },
+    "auth.mfa_factors": {
+      "schema": "auth",
+      "name": "mfa_factors",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "friendly_name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "factor_type",
+          "type": "USER-DEFINED",
+          "udt_name": "factor_type",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "USER-DEFINED",
+          "udt_name": "factor_status",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "secret",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "last_challenged_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "web_authn_credential",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "web_authn_aaguid",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "last_webauthn_challenge_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "factor_id_created_at_idx",
+          "definition": "CREATE INDEX factor_id_created_at_idx ON auth.mfa_factors USING btree (user_id, created_at)"
+        },
+        {
+          "name": "mfa_factors_last_challenged_at_key",
+          "definition": "CREATE UNIQUE INDEX mfa_factors_last_challenged_at_key ON auth.mfa_factors USING btree (last_challenged_at)"
+        },
+        {
+          "name": "mfa_factors_pkey",
+          "definition": "CREATE UNIQUE INDEX mfa_factors_pkey ON auth.mfa_factors USING btree (id)"
+        },
+        {
+          "name": "mfa_factors_user_friendly_name_unique",
+          "definition": "CREATE UNIQUE INDEX mfa_factors_user_friendly_name_unique ON auth.mfa_factors USING btree (friendly_name, user_id) WHERE (TRIM(BOTH FROM friendly_name) <> ''::text)"
+        },
+        {
+          "name": "mfa_factors_user_id_idx",
+          "definition": "CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id)"
+        },
+        {
+          "name": "unique_phone_factor_per_user",
+          "definition": "CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone)"
+        }
+      ]
+    },
+    "auth.oauth_authorizations": {
+      "schema": "auth",
+      "name": "oauth_authorizations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "authorization_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "redirect_uri",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "resource",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "code_challenge",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "code_challenge_method",
+          "type": "USER-DEFINED",
+          "udt_name": "code_challenge_method",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "response_type",
+          "type": "USER-DEFINED",
+          "udt_name": "oauth_response_type",
+          "nullable": false,
+          "default": "'code'::auth.oauth_response_type"
+        },
+        {
+          "name": "status",
+          "type": "USER-DEFINED",
+          "udt_name": "oauth_authorization_status",
+          "nullable": false,
+          "default": "'pending'::auth.oauth_authorization_status"
+        },
+        {
+          "name": "authorization_code",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "(now() + '00:03:00'::interval)"
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "nonce",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "oauth_auth_pending_exp_idx",
+          "definition": "CREATE INDEX oauth_auth_pending_exp_idx ON auth.oauth_authorizations USING btree (expires_at) WHERE (status = 'pending'::auth.oauth_authorization_status)"
+        },
+        {
+          "name": "oauth_authorizations_authorization_code_key",
+          "definition": "CREATE UNIQUE INDEX oauth_authorizations_authorization_code_key ON auth.oauth_authorizations USING btree (authorization_code)"
+        },
+        {
+          "name": "oauth_authorizations_authorization_id_key",
+          "definition": "CREATE UNIQUE INDEX oauth_authorizations_authorization_id_key ON auth.oauth_authorizations USING btree (authorization_id)"
+        },
+        {
+          "name": "oauth_authorizations_pkey",
+          "definition": "CREATE UNIQUE INDEX oauth_authorizations_pkey ON auth.oauth_authorizations USING btree (id)"
+        }
+      ]
+    },
+    "auth.oauth_client_states": {
+      "schema": "auth",
+      "name": "oauth_client_states",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "provider_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "code_verifier",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_oauth_client_states_created_at",
+          "definition": "CREATE INDEX idx_oauth_client_states_created_at ON auth.oauth_client_states USING btree (created_at)"
+        },
+        {
+          "name": "oauth_client_states_pkey",
+          "definition": "CREATE UNIQUE INDEX oauth_client_states_pkey ON auth.oauth_client_states USING btree (id)"
+        }
+      ]
+    },
+    "auth.oauth_clients": {
+      "schema": "auth",
+      "name": "oauth_clients",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_secret_hash",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "registration_type",
+          "type": "USER-DEFINED",
+          "udt_name": "oauth_registration_type",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "redirect_uris",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "grant_types",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "client_uri",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "logo_uri",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "client_type",
+          "type": "USER-DEFINED",
+          "udt_name": "oauth_client_type",
+          "nullable": false,
+          "default": "'confidential'::auth.oauth_client_type"
+        },
+        {
+          "name": "token_endpoint_auth_method",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "oauth_clients_deleted_at_idx",
+          "definition": "CREATE INDEX oauth_clients_deleted_at_idx ON auth.oauth_clients USING btree (deleted_at)"
+        },
+        {
+          "name": "oauth_clients_pkey",
+          "definition": "CREATE UNIQUE INDEX oauth_clients_pkey ON auth.oauth_clients USING btree (id)"
+        }
+      ]
+    },
+    "auth.oauth_consents": {
+      "schema": "auth",
+      "name": "oauth_consents",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "client_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "scopes",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "granted_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "oauth_consents_active_client_idx",
+          "definition": "CREATE INDEX oauth_consents_active_client_idx ON auth.oauth_consents USING btree (client_id) WHERE (revoked_at IS NULL)"
+        },
+        {
+          "name": "oauth_consents_active_user_client_idx",
+          "definition": "CREATE INDEX oauth_consents_active_user_client_idx ON auth.oauth_consents USING btree (user_id, client_id) WHERE (revoked_at IS NULL)"
+        },
+        {
+          "name": "oauth_consents_pkey",
+          "definition": "CREATE UNIQUE INDEX oauth_consents_pkey ON auth.oauth_consents USING btree (id)"
+        },
+        {
+          "name": "oauth_consents_user_client_unique",
+          "definition": "CREATE UNIQUE INDEX oauth_consents_user_client_unique ON auth.oauth_consents USING btree (user_id, client_id)"
+        },
+        {
+          "name": "oauth_consents_user_order_idx",
+          "definition": "CREATE INDEX oauth_consents_user_order_idx ON auth.oauth_consents USING btree (user_id, granted_at DESC)"
+        }
+      ]
+    },
+    "auth.one_time_tokens": {
+      "schema": "auth",
+      "name": "one_time_tokens",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "token_type",
+          "type": "USER-DEFINED",
+          "udt_name": "one_time_token_type",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "token_hash",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "relates_to",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "one_time_tokens_pkey",
+          "definition": "CREATE UNIQUE INDEX one_time_tokens_pkey ON auth.one_time_tokens USING btree (id)"
+        },
+        {
+          "name": "one_time_tokens_relates_to_hash_idx",
+          "definition": "CREATE INDEX one_time_tokens_relates_to_hash_idx ON auth.one_time_tokens USING hash (relates_to)"
+        },
+        {
+          "name": "one_time_tokens_token_hash_hash_idx",
+          "definition": "CREATE INDEX one_time_tokens_token_hash_hash_idx ON auth.one_time_tokens USING hash (token_hash)"
+        },
+        {
+          "name": "one_time_tokens_user_id_token_type_key",
+          "definition": "CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type)"
+        }
+      ]
+    },
+    "auth.refresh_tokens": {
+      "schema": "auth",
+      "name": "refresh_tokens",
+      "columns": [
+        {
+          "name": "instance_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "id",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": "nextval('auth.refresh_tokens_id_seq'::regclass)"
+        },
+        {
+          "name": "token",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "revoked",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "parent",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "session_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "refresh_tokens_instance_id_idx",
+          "definition": "CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id)"
+        },
+        {
+          "name": "refresh_tokens_instance_id_user_id_idx",
+          "definition": "CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id)"
+        },
+        {
+          "name": "refresh_tokens_parent_idx",
+          "definition": "CREATE INDEX refresh_tokens_parent_idx ON auth.refresh_tokens USING btree (parent)"
+        },
+        {
+          "name": "refresh_tokens_pkey",
+          "definition": "CREATE UNIQUE INDEX refresh_tokens_pkey ON auth.refresh_tokens USING btree (id)"
+        },
+        {
+          "name": "refresh_tokens_session_id_revoked_idx",
+          "definition": "CREATE INDEX refresh_tokens_session_id_revoked_idx ON auth.refresh_tokens USING btree (session_id, revoked)"
+        },
+        {
+          "name": "refresh_tokens_token_unique",
+          "definition": "CREATE UNIQUE INDEX refresh_tokens_token_unique ON auth.refresh_tokens USING btree (token)"
+        },
+        {
+          "name": "refresh_tokens_updated_at_idx",
+          "definition": "CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC)"
+        }
+      ]
+    },
+    "auth.saml_providers": {
+      "schema": "auth",
+      "name": "saml_providers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "sso_provider_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "entity_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "metadata_xml",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "metadata_url",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "attribute_mapping",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "name_id_format",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "saml_providers_entity_id_key",
+          "definition": "CREATE UNIQUE INDEX saml_providers_entity_id_key ON auth.saml_providers USING btree (entity_id)"
+        },
+        {
+          "name": "saml_providers_pkey",
+          "definition": "CREATE UNIQUE INDEX saml_providers_pkey ON auth.saml_providers USING btree (id)"
+        },
+        {
+          "name": "saml_providers_sso_provider_id_idx",
+          "definition": "CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id)"
+        }
+      ]
+    },
+    "auth.saml_relay_states": {
+      "schema": "auth",
+      "name": "saml_relay_states",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "sso_provider_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "for_email",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "redirect_to",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "flow_state_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "saml_relay_states_created_at_idx",
+          "definition": "CREATE INDEX saml_relay_states_created_at_idx ON auth.saml_relay_states USING btree (created_at DESC)"
+        },
+        {
+          "name": "saml_relay_states_for_email_idx",
+          "definition": "CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btree (for_email)"
+        },
+        {
+          "name": "saml_relay_states_pkey",
+          "definition": "CREATE UNIQUE INDEX saml_relay_states_pkey ON auth.saml_relay_states USING btree (id)"
+        },
+        {
+          "name": "saml_relay_states_sso_provider_id_idx",
+          "definition": "CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id)"
+        }
+      ]
+    },
+    "auth.schema_migrations": {
+      "schema": "auth",
+      "name": "schema_migrations",
+      "columns": [
+        {
+          "name": "version",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "schema_migrations_pkey",
+          "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON auth.schema_migrations USING btree (version)"
+        }
+      ]
+    },
+    "auth.sessions": {
+      "schema": "auth",
+      "name": "sessions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "factor_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "aal",
+          "type": "USER-DEFINED",
+          "udt_name": "aal_level",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "not_after",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "refreshed_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "user_agent",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "ip",
+          "type": "inet",
+          "udt_name": "inet",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "tag",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "oauth_client_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "refresh_token_hmac_key",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "refresh_token_counter",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "scopes",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sessions_not_after_idx",
+          "definition": "CREATE INDEX sessions_not_after_idx ON auth.sessions USING btree (not_after DESC)"
+        },
+        {
+          "name": "sessions_oauth_client_id_idx",
+          "definition": "CREATE INDEX sessions_oauth_client_id_idx ON auth.sessions USING btree (oauth_client_id)"
+        },
+        {
+          "name": "sessions_pkey",
+          "definition": "CREATE UNIQUE INDEX sessions_pkey ON auth.sessions USING btree (id)"
+        },
+        {
+          "name": "sessions_user_id_idx",
+          "definition": "CREATE INDEX sessions_user_id_idx ON auth.sessions USING btree (user_id)"
+        },
+        {
+          "name": "user_id_created_at_idx",
+          "definition": "CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at)"
+        }
+      ]
+    },
+    "auth.sso_domains": {
+      "schema": "auth",
+      "name": "sso_domains",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "sso_provider_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "domain",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sso_domains_domain_idx",
+          "definition": "CREATE UNIQUE INDEX sso_domains_domain_idx ON auth.sso_domains USING btree (lower(domain))"
+        },
+        {
+          "name": "sso_domains_pkey",
+          "definition": "CREATE UNIQUE INDEX sso_domains_pkey ON auth.sso_domains USING btree (id)"
+        },
+        {
+          "name": "sso_domains_sso_provider_id_idx",
+          "definition": "CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id)"
+        }
+      ]
+    },
+    "auth.sso_providers": {
+      "schema": "auth",
+      "name": "sso_providers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "resource_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sso_providers_pkey",
+          "definition": "CREATE UNIQUE INDEX sso_providers_pkey ON auth.sso_providers USING btree (id)"
+        },
+        {
+          "name": "sso_providers_resource_id_idx",
+          "definition": "CREATE UNIQUE INDEX sso_providers_resource_id_idx ON auth.sso_providers USING btree (lower(resource_id))"
+        },
+        {
+          "name": "sso_providers_resource_id_pattern_idx",
+          "definition": "CREATE INDEX sso_providers_resource_id_pattern_idx ON auth.sso_providers USING btree (resource_id text_pattern_ops)"
+        }
+      ]
+    },
+    "auth.users": {
+      "schema": "auth",
+      "name": "users",
+      "columns": [
+        {
+          "name": "instance_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "aud",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "role",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "encrypted_password",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_confirmed_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "invited_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "confirmation_token",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "confirmation_sent_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "recovery_token",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "recovery_sent_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_change_token_new",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_change",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_change_sent_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "last_sign_in_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "raw_app_meta_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_super_admin",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": "NULL::character varying"
+        },
+        {
+          "name": "phone_confirmed_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "phone_change",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": "''::character varying"
+        },
+        {
+          "name": "phone_change_token",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "''::character varying"
+        },
+        {
+          "name": "phone_change_sent_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "confirmed_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "email_change_token_current",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "''::character varying"
+        },
+        {
+          "name": "email_change_confirm_status",
+          "type": "smallint",
+          "udt_name": "int2",
+          "nullable": true,
+          "default": "0"
+        },
+        {
+          "name": "banned_until",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "reauthentication_token",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "''::character varying"
+        },
+        {
+          "name": "reauthentication_sent_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_sso_user",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_anonymous",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "confirmation_token_idx",
+          "definition": "CREATE UNIQUE INDEX confirmation_token_idx ON auth.users USING btree (confirmation_token) WHERE ((confirmation_token)::text !~ '^[0-9 ]*$'::text)"
+        },
+        {
+          "name": "email_change_token_current_idx",
+          "definition": "CREATE UNIQUE INDEX email_change_token_current_idx ON auth.users USING btree (email_change_token_current) WHERE ((email_change_token_current)::text !~ '^[0-9 ]*$'::text)"
+        },
+        {
+          "name": "email_change_token_new_idx",
+          "definition": "CREATE UNIQUE INDEX email_change_token_new_idx ON auth.users USING btree (email_change_token_new) WHERE ((email_change_token_new)::text !~ '^[0-9 ]*$'::text)"
+        },
+        {
+          "name": "idx_users_created_at_desc",
+          "definition": "CREATE INDEX idx_users_created_at_desc ON auth.users USING btree (created_at DESC)"
+        },
+        {
+          "name": "idx_users_email",
+          "definition": "CREATE INDEX idx_users_email ON auth.users USING btree (email)"
+        },
+        {
+          "name": "idx_users_last_sign_in_at_desc",
+          "definition": "CREATE INDEX idx_users_last_sign_in_at_desc ON auth.users USING btree (last_sign_in_at DESC)"
+        },
+        {
+          "name": "idx_users_name",
+          "definition": "CREATE INDEX idx_users_name ON auth.users USING btree (((raw_user_meta_data ->> 'name'::text))) WHERE ((raw_user_meta_data ->> 'name'::text) IS NOT NULL)"
+        },
+        {
+          "name": "reauthentication_token_idx",
+          "definition": "CREATE UNIQUE INDEX reauthentication_token_idx ON auth.users USING btree (reauthentication_token) WHERE ((reauthentication_token)::text !~ '^[0-9 ]*$'::text)"
+        },
+        {
+          "name": "recovery_token_idx",
+          "definition": "CREATE UNIQUE INDEX recovery_token_idx ON auth.users USING btree (recovery_token) WHERE ((recovery_token)::text !~ '^[0-9 ]*$'::text)"
+        },
+        {
+          "name": "users_email_partial_key",
+          "definition": "CREATE UNIQUE INDEX users_email_partial_key ON auth.users USING btree (email) WHERE (is_sso_user = false)"
+        },
+        {
+          "name": "users_instance_id_email_idx",
+          "definition": "CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, lower((email)::text))"
+        },
+        {
+          "name": "users_instance_id_idx",
+          "definition": "CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id)"
+        },
+        {
+          "name": "users_is_anonymous_idx",
+          "definition": "CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous)"
+        },
+        {
+          "name": "users_phone_key",
+          "definition": "CREATE UNIQUE INDEX users_phone_key ON auth.users USING btree (phone)"
+        },
+        {
+          "name": "users_pkey",
+          "definition": "CREATE UNIQUE INDEX users_pkey ON auth.users USING btree (id)"
+        }
+      ]
+    },
+    "auth.webauthn_challenges": {
+      "schema": "auth",
+      "name": "webauthn_challenges",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "challenge_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "session_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "webauthn_challenges_expires_at_idx",
+          "definition": "CREATE INDEX webauthn_challenges_expires_at_idx ON auth.webauthn_challenges USING btree (expires_at)"
+        },
+        {
+          "name": "webauthn_challenges_pkey",
+          "definition": "CREATE UNIQUE INDEX webauthn_challenges_pkey ON auth.webauthn_challenges USING btree (id)"
+        },
+        {
+          "name": "webauthn_challenges_user_id_idx",
+          "definition": "CREATE INDEX webauthn_challenges_user_id_idx ON auth.webauthn_challenges USING btree (user_id)"
+        }
+      ]
+    },
+    "auth.webauthn_credentials": {
+      "schema": "auth",
+      "name": "webauthn_credentials",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "credential_id",
+          "type": "bytea",
+          "udt_name": "bytea",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "public_key",
+          "type": "bytea",
+          "udt_name": "bytea",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "attestation_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "aaguid",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sign_count",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "transports",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb"
+        },
+        {
+          "name": "backup_eligible",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "backed_up",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "friendly_name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "last_used_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "webauthn_credentials_credential_id_key",
+          "definition": "CREATE UNIQUE INDEX webauthn_credentials_credential_id_key ON auth.webauthn_credentials USING btree (credential_id)"
+        },
+        {
+          "name": "webauthn_credentials_pkey",
+          "definition": "CREATE UNIQUE INDEX webauthn_credentials_pkey ON auth.webauthn_credentials USING btree (id)"
+        },
+        {
+          "name": "webauthn_credentials_user_id_idx",
+          "definition": "CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING btree (user_id)"
+        }
+      ]
+    },
+    "public.entries": {
+      "schema": "public",
+      "name": "entries",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "accentColor",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "theme",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "'neutral'::text"
+        },
+        {
+          "name": "tags",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": false,
+          "default": "'{}'::text[]"
+        },
+        {
+          "name": "favorite",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "pinned",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": false,
+          "default": "false"
+        },
+        {
+          "name": "collection",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "checklist",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb"
+        },
+        {
+          "name": "templateId",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "promptId",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "relatedEntryIds",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": false,
+          "default": "'{}'::text[]"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "entries_collection_idx",
+          "definition": "CREATE INDEX entries_collection_idx ON public.entries USING btree (user_id, collection)"
+        },
+        {
+          "name": "entries_created_at_idx",
+          "definition": "CREATE INDEX entries_created_at_idx ON public.entries USING btree (\"createdAt\" DESC)"
+        },
+        {
+          "name": "entries_pkey",
+          "definition": "CREATE UNIQUE INDEX entries_pkey ON public.entries USING btree (id)"
+        },
+        {
+          "name": "entries_tags_gin_idx",
+          "definition": "CREATE INDEX entries_tags_gin_idx ON public.entries USING gin (tags)"
+        },
+        {
+          "name": "entries_user_created_idx",
+          "definition": "CREATE INDEX entries_user_created_idx ON public.entries USING btree (user_id, \"createdAt\" DESC)"
+        },
+        {
+          "name": "entries_user_id_idx",
+          "definition": "CREATE INDEX entries_user_id_idx ON public.entries USING btree (user_id)"
+        }
+      ]
+    },
+    "public.schema_migrations": {
+      "schema": "public",
+      "name": "schema_migrations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "default": "nextval('schema_migrations_id_seq'::regclass)"
+        },
+        {
+          "name": "filename",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "checksum",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "applied_by",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "schema_migrations_filename_key",
+          "definition": "CREATE UNIQUE INDEX schema_migrations_filename_key ON public.schema_migrations USING btree (filename)"
+        },
+        {
+          "name": "schema_migrations_pkey",
+          "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON public.schema_migrations USING btree (id)"
+        }
+      ]
+    },
+    "public.sql_audit_log": {
+      "schema": "public",
+      "name": "sql_audit_log",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "executed_by",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "query",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "row_count",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "executed_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sql_audit_log_executed_at_idx",
+          "definition": "CREATE INDEX sql_audit_log_executed_at_idx ON public.sql_audit_log USING btree (executed_at DESC)"
+        },
+        {
+          "name": "sql_audit_log_executed_by_idx",
+          "definition": "CREATE INDEX sql_audit_log_executed_by_idx ON public.sql_audit_log USING btree (executed_by)"
+        },
+        {
+          "name": "sql_audit_log_pkey",
+          "definition": "CREATE UNIQUE INDEX sql_audit_log_pkey ON public.sql_audit_log USING btree (id)"
+        }
+      ]
+    },
+    "public.user_roles": {
+      "schema": "public",
+      "name": "user_roles",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "'user'::text"
+        },
+        {
+          "name": "assigned_by",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "assigned_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "user_roles_pkey",
+          "definition": "CREATE UNIQUE INDEX user_roles_pkey ON public.user_roles USING btree (user_id)"
+        },
+        {
+          "name": "user_roles_role_idx",
+          "definition": "CREATE INDEX user_roles_role_idx ON public.user_roles USING btree (role)"
+        }
+      ]
+    },
+    "realtime.messages": {
+      "schema": "realtime",
+      "name": "messages",
+      "columns": [
+        {
+          "name": "topic",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "extension",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "event",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "private",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "inserted_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "messages_inserted_at_topic_index",
+          "definition": "CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE))"
+        },
+        {
+          "name": "messages_pkey",
+          "definition": "CREATE UNIQUE INDEX messages_pkey ON ONLY realtime.messages USING btree (id, inserted_at)"
+        }
+      ]
+    },
+    "realtime.schema_migrations": {
+      "schema": "realtime",
+      "name": "schema_migrations",
+      "columns": [
+        {
+          "name": "version",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "inserted_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "schema_migrations_pkey",
+          "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON realtime.schema_migrations USING btree (version)"
+        }
+      ]
+    },
+    "realtime.subscription": {
+      "schema": "realtime",
+      "name": "subscription",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "subscription_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "entity",
+          "type": "regclass",
+          "udt_name": "regclass",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "filters",
+          "type": "ARRAY",
+          "udt_name": "_user_defined_filter",
+          "nullable": false,
+          "default": "'{}'::realtime.user_defined_filter[]"
+        },
+        {
+          "name": "claims",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "claims_role",
+          "type": "regrole",
+          "udt_name": "regrole",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": "timezone('utc'::text, now())"
+        },
+        {
+          "name": "action_filter",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": "'*'::text"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_realtime_subscription_entity",
+          "definition": "CREATE INDEX ix_realtime_subscription_entity ON realtime.subscription USING btree (entity)"
+        },
+        {
+          "name": "pk_subscription",
+          "definition": "CREATE UNIQUE INDEX pk_subscription ON realtime.subscription USING btree (id)"
+        },
+        {
+          "name": "subscription_subscription_id_entity_filters_action_filter_key",
+          "definition": "CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_key ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter)"
+        }
+      ]
+    },
+    "storage.buckets": {
+      "schema": "storage",
+      "name": "buckets",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "owner",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "public",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        },
+        {
+          "name": "avif_autodetection",
+          "type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        },
+        {
+          "name": "file_size_limit",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "allowed_mime_types",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "owner_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "type",
+          "type": "USER-DEFINED",
+          "udt_name": "buckettype",
+          "nullable": false,
+          "default": "'STANDARD'::storage.buckettype"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "bname",
+          "definition": "CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name)"
+        },
+        {
+          "name": "buckets_pkey",
+          "definition": "CREATE UNIQUE INDEX buckets_pkey ON storage.buckets USING btree (id)"
+        }
+      ]
+    },
+    "storage.buckets_analytics": {
+      "schema": "storage",
+      "name": "buckets_analytics",
+      "columns": [
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "type",
+          "type": "USER-DEFINED",
+          "udt_name": "buckettype",
+          "nullable": false,
+          "default": "'ANALYTICS'::storage.buckettype"
+        },
+        {
+          "name": "format",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "'ICEBERG'::text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "buckets_analytics_pkey",
+          "definition": "CREATE UNIQUE INDEX buckets_analytics_pkey ON storage.buckets_analytics USING btree (id)"
+        },
+        {
+          "name": "buckets_analytics_unique_name_idx",
+          "definition": "CREATE UNIQUE INDEX buckets_analytics_unique_name_idx ON storage.buckets_analytics USING btree (name) WHERE (deleted_at IS NULL)"
+        }
+      ]
+    },
+    "storage.buckets_vectors": {
+      "schema": "storage",
+      "name": "buckets_vectors",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "type",
+          "type": "USER-DEFINED",
+          "udt_name": "buckettype",
+          "nullable": false,
+          "default": "'VECTOR'::storage.buckettype"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "buckets_vectors_pkey",
+          "definition": "CREATE UNIQUE INDEX buckets_vectors_pkey ON storage.buckets_vectors USING btree (id)"
+        }
+      ]
+    },
+    "storage.migrations": {
+      "schema": "storage",
+      "name": "migrations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "hash",
+          "type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "executed_at",
+          "type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "migrations_name_key",
+          "definition": "CREATE UNIQUE INDEX migrations_name_key ON storage.migrations USING btree (name)"
+        },
+        {
+          "name": "migrations_pkey",
+          "definition": "CREATE UNIQUE INDEX migrations_pkey ON storage.migrations USING btree (id)"
+        }
+      ]
+    },
+    "storage.objects": {
+      "schema": "storage",
+      "name": "objects",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "bucket_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "owner",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "last_accessed_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "path_tokens",
+          "type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "version",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "owner_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "user_metadata",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "bucketid_objname",
+          "definition": "CREATE UNIQUE INDEX bucketid_objname ON storage.objects USING btree (bucket_id, name)"
+        },
+        {
+          "name": "idx_objects_bucket_id_name",
+          "definition": "CREATE INDEX idx_objects_bucket_id_name ON storage.objects USING btree (bucket_id, name COLLATE \"C\")"
+        },
+        {
+          "name": "idx_objects_bucket_id_name_lower",
+          "definition": "CREATE INDEX idx_objects_bucket_id_name_lower ON storage.objects USING btree (bucket_id, lower(name) COLLATE \"C\")"
+        },
+        {
+          "name": "name_prefix_search",
+          "definition": "CREATE INDEX name_prefix_search ON storage.objects USING btree (name text_pattern_ops)"
+        },
+        {
+          "name": "objects_pkey",
+          "definition": "CREATE UNIQUE INDEX objects_pkey ON storage.objects USING btree (id)"
+        }
+      ]
+    },
+    "storage.s3_multipart_uploads": {
+      "schema": "storage",
+      "name": "s3_multipart_uploads",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "in_progress_size",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "upload_signature",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "bucket_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "key",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "version",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "owner_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "user_metadata",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_multipart_uploads_list",
+          "definition": "CREATE INDEX idx_multipart_uploads_list ON storage.s3_multipart_uploads USING btree (bucket_id, key, created_at)"
+        },
+        {
+          "name": "s3_multipart_uploads_pkey",
+          "definition": "CREATE UNIQUE INDEX s3_multipart_uploads_pkey ON storage.s3_multipart_uploads USING btree (id)"
+        }
+      ]
+    },
+    "storage.s3_multipart_uploads_parts": {
+      "schema": "storage",
+      "name": "s3_multipart_uploads_parts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "upload_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "size",
+          "type": "bigint",
+          "udt_name": "int8",
+          "nullable": false,
+          "default": "0"
+        },
+        {
+          "name": "part_number",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "bucket_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "key",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "etag",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "owner_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "version",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "s3_multipart_uploads_parts_pkey",
+          "definition": "CREATE UNIQUE INDEX s3_multipart_uploads_parts_pkey ON storage.s3_multipart_uploads_parts USING btree (id)"
+        }
+      ]
+    },
+    "storage.vector_indexes": {
+      "schema": "storage",
+      "name": "vector_indexes",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "bucket_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "data_type",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "dimension",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "distance_metric",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "metadata_configuration",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "vector_indexes_name_bucket_id_idx",
+          "definition": "CREATE UNIQUE INDEX vector_indexes_name_bucket_id_idx ON storage.vector_indexes USING btree (name, bucket_id)"
+        },
+        {
+          "name": "vector_indexes_pkey",
+          "definition": "CREATE UNIQUE INDEX vector_indexes_pkey ON storage.vector_indexes USING btree (id)"
+        }
+      ]
+    },
+    "vault.secrets": {
+      "schema": "vault",
+      "name": "secrets",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "''::text"
+        },
+        {
+          "name": "secret",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "key_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "nonce",
+          "type": "bytea",
+          "udt_name": "bytea",
+          "nullable": true,
+          "default": "vault._crypto_aead_det_noncegen()"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "secrets_name_idx",
+          "definition": "CREATE UNIQUE INDEX secrets_name_idx ON vault.secrets USING btree (name) WHERE (name IS NOT NULL)"
+        },
+        {
+          "name": "secrets_pkey",
+          "definition": "CREATE UNIQUE INDEX secrets_pkey ON vault.secrets USING btree (id)"
+        }
+      ]
+    }
+  }
+}

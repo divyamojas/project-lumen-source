@@ -161,6 +161,35 @@ async def apply_migration(
     logger.info("Applied migration: %s", filename)
 
 
+# ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+async def bootstrap_superuser(pool: asyncpg.Pool, user_id: str) -> bool:
+    """Insert the first superuser if user_roles is empty. Returns True if seeded."""
+    async with pool.acquire() as conn:
+        count = await conn.fetchval("SELECT COUNT(*) FROM user_roles")
+        if count == 0:
+            await conn.execute(
+                "INSERT INTO user_roles (user_id, role) VALUES ($1, 'superuser') "
+                "ON CONFLICT DO NOTHING",
+                user_id,
+            )
+            logger.info("Bootstrapped superuser: %s", user_id)
+            return True
+    return False
+
+
+async def apply_all_pending(pool: asyncpg.Pool) -> list[str]:
+    """Apply all pending migrations. Returns list of applied filenames."""
+    files = list_migration_files()
+    applied = await get_applied_migrations(pool)
+    pending = [f for f in files if f["filename"] not in applied]
+    for f in pending:
+        await apply_migration(pool, f["filename"], f["sql"])
+    if pending:
+        logger.info("Applied %d migration(s): %s", len(pending), [f["filename"] for f in pending])
+    return [f["filename"] for f in pending]
+
+
 # ── Raw SQL execution ─────────────────────────────────────────────────────────
 
 _SELECT_LIKE = re.compile(r"^\s*(SELECT|WITH|EXPLAIN|SHOW|TABLE)\b", re.IGNORECASE)

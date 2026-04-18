@@ -19,9 +19,6 @@ venv/
 .venv/
 env/
 
-# Generated at runtime
-schema_snapshot.json
-
 # Testing
 .pytest_cache/
 .coverage
