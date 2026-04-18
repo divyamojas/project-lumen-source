@@ -5,8 +5,11 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import jwt
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient
+
+bearer_scheme = HTTPBearer(auto_error=False)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_JWKS_URL = os.getenv("SUPABASE_JWKS_URL")
@@ -141,8 +144,12 @@ def _decode_hs256_token(token: str) -> str:
     return _verify_hs256_token_remotely(token)
 
 
-def get_current_user(authorization: str | None = Header(default=None)) -> str:
-    token = _get_bearer_token(authorization)
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    if not credentials:
+        raise _unauthorized("Missing Authorization header")
+    token = credentials.credentials
     algorithm = _get_token_algorithm(token)
 
     if algorithm == "HS256":
