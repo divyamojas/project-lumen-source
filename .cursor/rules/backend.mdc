@@ -1,53 +1,62 @@
 ---
 description: Lumen backend rules — apply to all Python files in this repo
-globs: ["**/*.py", "requirements.txt", "Dockerfile"]
+globs: ["**/*.py", "requirements.txt", "Dockerfile", "migrations/*.sql"]
 alwaysApply: true
 ---
 
 # Lumen Backend
 
-FastAPI service for the Lumen journaling PWA. Phase 1 scaffold complete.
-Runs in Docker (lumen-api, port 8000). Connects to Supabase via Python client.
+FastAPI service for the Lumen journaling PWA. Phase 1 complete.
+Runs in Docker (lumen-api, port 8000).
 
 ## Stack
-- Python 3.11, FastAPI, Supabase Python client, PyJWT, Pydantic v2
-- No ORM — Supabase client directly
-- No TypeScript, no local installs — Docker only
+- Python 3.11, FastAPI 0.115, Pydantic v2, supabase-py 2.28, PyJWT, asyncpg 0.29
+- Supabase async client for application queries; asyncpg pool for SQL/migrations
+- No ORM. No TypeScript. No local installs — Docker only.
 
 ## File Map
-- `app/main.py` — app init, CORS, router mount, /health
-- `app/auth.py` — `get_current_user` dependency: verifies JWT, returns user_id (sub claim)
-- `app/routes/entries.py` — CRUD for /entries
-- `app/models/entry.py` — EntryCreate, EntryUpdate, EntryResponse
+- `app/main.py` — lifespan, CORS, routers
+- `app/auth.py` — `get_current_user` (HTTPBearer, JWKS → HS256 fallbacks)
+- `app/db.py` — asyncpg pool, schema snapshot, migrations, raw SQL
+- `app/dependencies.py` — `get_supabase`, `get_db_pool`, `require_role(minimum_role)`
+- `app/routes/entries.py` — user-scoped CRUD `/entries`
+- `app/routes/users.py` — `GET /users/me`
+- `app/routes/admin.py` — stats, user management, cross-user entries
+- `app/routes/schema.py` — schema snapshot, migrations, raw SQL endpoints
+- `app/models/entry.py` — entry Pydantic models + EntryListResponse
+- `app/models/admin.py` — RoleUpdate, UserSummary, AdminStats
+- `app/models/schema.py` — SchemaSnapshot, MigrationRecord, SQLRequest, SQLResponse
+- `migrations/` — numbered `.sql` files, applied via `POST /admin/schema/migrations/apply`
 
 ## Auth
-Every protected route uses `Depends(get_current_user)` from `app/auth.py`.
+`get_current_user` uses `HTTPBearer` — shows Authorize button in Swagger UI.
+Resolution: JWKS (asymmetric) → HS256 local secret → HS256 remote `/auth/v1/user`.
+Returns `user_id` (JWT `sub`). Raises 401 on failure.
 
-Resolution order:
-1. Parse `Authorization: Bearer <token>` header
-2. Peek at token `alg` header (unsigned)
-3. Asymmetric (RS256/ES256): verify via JWKS at `SUPABASE_URL/auth/v1/.well-known/jwks.json`
-4. HS256 + `SUPABASE_JWT_SECRET`: verify locally with shared secret
-5. HS256 + no secret: verify remotely via `GET /auth/v1/user` with `SUPABASE_PUBLISHABLE_KEY`
+## RBAC
+`require_role(minimum_role)` in `app/dependencies.py`.
+Hierarchy: `user(1) < admin(2) < superuser(3)`. Checks `user_roles` table.
+Returns caller `user_id` on pass, raises 403 on fail.
 
-Returns `user_id` (JWT `sub`) on success. Never trusts user_id from request body.
+## Key Endpoint Permissions
+- `/entries/*` — any authenticated user (own data only)
+- `/users/me` — any authenticated user
+- `/admin/stats`, `/admin/users`, `/admin/schema` — admin+
+- `/admin/users/{id}/role`, `/admin/sql`, `/admin/schema/migrations/apply` — superuser only
+
+## Environment Variables
+Required: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`
+- `DATABASE_URL` is a direct Postgres URI for asyncpg — URL-encode `@` in password as `%40`
+
+Optional: `SUPABASE_JWKS_URL`, `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY`
 
 ## Rules (non-negotiable)
-- No ORM — Supabase Python client only
-- No hardcoded secrets — all config from env vars (.env, never committed)
-- user_id always from JWT, never from request body
+- No ORM — Supabase client or asyncpg only
+- No hardcoded secrets — all config from `.env`
+- `user_id` always from JWT, never from request body
 - Return 404 (not 403) for owned-resource-not-found
 - Return 401 for missing/invalid JWT
-- CORS: allow http://localhost:3000
+- CORS: allow `http://localhost:3000`
 
-## Environment Variables (from .env)
-- `SUPABASE_URL`
-- `SUPABASE_SECRET_KEY` — preferred hosted backend key (`sb_secret_...`)
-- `SUPABASE_PUBLISHABLE_KEY` — preferred public key (`sb_publishable_...`)
-- `SUPABASE_JWKS_URL` — optional override
-- `SUPABASE_SERVICE_ROLE_KEY` — optional legacy fallback
-- `SUPABASE_ANON_KEY` — optional legacy fallback
-- `SUPABASE_JWT_SECRET` — optional legacy HS256 fallback
-
-## Out of Scope (Phase 1)
-Do not implement: frontend wiring, S3, Lambda, Bedrock, Comprehend.
+## Out of Scope
+Do not implement: frontend wiring (Phase 2), S3 (Phase 3), Lambda/Bedrock (Phase 4), Comprehend (Phase 5).
