@@ -9,7 +9,13 @@ router = APIRouter(prefix="/admin", tags=["admin-schema"])
 
 
 def get_pool(request: Request) -> asyncpg.Pool:
-    return request.app.state.db_pool
+    pool = request.app.state.db_pool
+    if pool is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="DATABASE_URL is not configured or unreachable",
+        )
+    return pool
 
 
 # ── Schema snapshot ───────────────────────────────────────────────────────────

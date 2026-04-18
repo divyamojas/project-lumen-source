@@ -28,14 +28,17 @@ async def lifespan(app: FastAPI):
         or _require("SUPABASE_SECRET_KEY"),
     )
 
-    # Direct Postgres pool (migrations, raw SQL)
-    app.state.db_pool = await db.create_pool()
-
-    # Ensure migrations tracking table exists
-    await db.ensure_migrations_table(app.state.db_pool)
-
-    # Schema snapshot on every startup
-    await db.take_schema_snapshot(app.state.db_pool)
+    # Direct Postgres pool (migrations, raw SQL) — optional, degrades gracefully
+    try:
+        app.state.db_pool = await db.create_pool()
+        await db.ensure_migrations_table(app.state.db_pool)
+        await db.take_schema_snapshot(app.state.db_pool)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "DB pool unavailable — schema/migration/SQL endpoints disabled: %s", exc
+        )
+        app.state.db_pool = None
 
     yield
 
