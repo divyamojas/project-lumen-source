@@ -27,7 +27,6 @@ class UserMeResponse(BaseModel):
     id: str
     email: Optional[str] = None
     role: str
-    tier: str = "self"
     created_at: Optional[str] = None
     last_sign_in_at: Optional[str] = None
     metadata: dict[str, Any] = Field(default_factory=dict)

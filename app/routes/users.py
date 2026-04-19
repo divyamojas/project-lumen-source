@@ -89,7 +89,6 @@ async def get_me(
         id=user_id,
         email=getattr(user, "email", None),
         role=role,
-        tier="self",
         created_at=str(getattr(user, "created_at", None)) if user and getattr(user, "created_at", None) else None,
         last_sign_in_at=(
             str(getattr(user, "last_sign_in_at", None))
