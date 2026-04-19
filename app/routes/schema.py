@@ -32,10 +32,13 @@ async def get_schema(
 
 @router.post("/schema/refresh", response_model=SchemaSnapshot)
 async def refresh_schema(
+    request: Request,
     pool: asyncpg.Pool = Depends(get_pool),
     _: str = Depends(require_role("admin")),
 ):
-    return await db.take_schema_snapshot(pool)
+    snapshot = await db.take_schema_snapshot(pool)
+    request.app.state.schema_snapshot = snapshot
+    return snapshot
 
 
 # ── Migrations ────────────────────────────────────────────────────────────────
@@ -72,6 +75,7 @@ async def list_migrations(
 
 @router.post("/schema/migrations/apply", response_model=list[MigrationRecord])
 async def apply_pending_migrations(
+    request: Request,
     pool: asyncpg.Pool = Depends(get_pool),
     caller_id: str = Depends(require_role("superuser")),
 ):
@@ -86,7 +90,7 @@ async def apply_pending_migrations(
         await db.apply_migration(pool, f["filename"], f["sql"], applied_by=caller_id)
 
     # Refresh snapshot after schema changes
-    await db.take_schema_snapshot(pool)
+    request.app.state.schema_snapshot = await db.take_schema_snapshot(pool)
 
     return await list_migrations(pool=pool, _=caller_id)
 
@@ -107,6 +111,12 @@ async def run_sql(
         result = await db.execute_sql(pool, body.query)
     except asyncpg.PostgresError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+    # Keep the admin schema browser fresh after direct SQL changes.
+    try:
+        request.app.state.schema_snapshot = await db.take_schema_snapshot(pool)
+    except Exception:
+        pass
 
     # Persist to audit log (best-effort — don't fail the response if log insert fails)
     try:

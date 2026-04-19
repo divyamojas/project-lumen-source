@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import acreate_client
 
@@ -38,13 +38,14 @@ async def lifespan(app: FastAPI):
         if bootstrap_id:
             await db.bootstrap_superuser(app.state.db_pool, bootstrap_id)
 
-        await db.take_schema_snapshot(app.state.db_pool)
+        app.state.schema_snapshot = await db.take_schema_snapshot(app.state.db_pool)
     except Exception as exc:
         import logging
         logging.getLogger(__name__).warning(
             "DB pool unavailable — schema/migration/SQL endpoints disabled: %s", exc
         )
         app.state.db_pool = None
+        app.state.schema_snapshot = None
 
     yield
 
@@ -83,7 +84,7 @@ app.include_router(schema.router)
 
 
 @app.get("/health")
-async def health(request):
+async def health(request: Request):
     pool = request.app.state.db_pool
     return {
         "status": "ok" if pool is not None else "degraded",
