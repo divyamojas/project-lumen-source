@@ -1,5 +1,23 @@
+from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, field_validator
+
+
+class JournalType(str, Enum):
+    personal = "personal"
+    science = "science"
+    travel = "travel"
+    fitness = "fitness"
+    work = "work"
+    creative = "creative"
+
+# type_metadata shape by journal_type:
+# personal:  {}  (no extra fields)
+# science:   { hypothesis, method, results, conclusion, tags_scientific }
+# travel:    { location, country, coordinates, weather, transport_mode }
+# fitness:   { workout_type, duration_min, distance_km, rpe, exercises: [] }
+# work:      { project, stakeholders, decisions, action_items: [] }
+# creative:  { genre, word_count_target, inspiration, draft_number }
 
 
 class ChecklistItem(BaseModel):
@@ -24,6 +42,8 @@ class EntryCreate(BaseModel):
     templateId: str = ""
     promptId: str = ""
     relatedEntryIds: list[str] = []
+    journal_type: JournalType = JournalType.personal
+    type_metadata: dict = {}
 
     @field_validator("title")
     @classmethod
@@ -56,6 +76,8 @@ class EntryUpdate(BaseModel):
     templateId: Optional[str] = None
     promptId: Optional[str] = None
     relatedEntryIds: Optional[list[str]] = None
+    journal_type: Optional[JournalType] = None
+    type_metadata: Optional[dict] = None
 
     @field_validator("title")
     @classmethod
@@ -95,6 +117,8 @@ class EntryResponse(BaseModel):
     templateId: str
     promptId: str
     relatedEntryIds: list[str]
+    journal_type: JournalType = JournalType.personal
+    type_metadata: dict = {}
 
 
 class EntryListResponse(BaseModel):

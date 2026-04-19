@@ -6,6 +6,7 @@ from supabase import AsyncClient
 from app.auth import get_current_user
 from app.dependencies import get_supabase
 from app.models.entry import EntryCreate, EntryListResponse, EntryResponse, EntryUpdate
+from app.services.s3_sync import delete_entry_from_s3, sync_entry_to_s3
 
 router = APIRouter(prefix="/entries", tags=["entries"])
 
@@ -18,7 +19,9 @@ async def create_entry(
 ):
     data = {**entry.model_dump(), "user_id": user_id}
     result = await supabase.table("entries").insert(data).execute()
-    return result.data[0]
+    row = result.data[0]
+    sync_entry_to_s3(user_id, row)
+    return row
 
 
 @router.get("", response_model=EntryListResponse)
@@ -104,7 +107,9 @@ async def update_entry(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
-    return result.data[0]
+    row = result.data[0]
+    sync_entry_to_s3(user_id, row)
+    return row
 
 
 @router.delete("/{entry_id}", status_code=204)
@@ -122,3 +127,4 @@ async def delete_entry(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
+    delete_entry_from_s3(user_id, entry_id)

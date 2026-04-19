@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run linter
+        run: |
+          pip install ruff
+          ruff check .
+
+      - name: Run tests
+        run: |
+          pip install pytest httpx
+          pytest tests/ -v
+        env:
+          S3_SYNC_ENABLED: "false"
+          SUPABASE_URL: "https://test.supabase.co"
+          SUPABASE_SECRET_KEY: "test-secret"
+          SUPABASE_PUBLISHABLE_KEY: "test-pub"

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import acreate_client
 
 from app import db
-from app.routes import admin, auth, entries, schema, users
+from app.routes import admin, auth, entries, legal, schema, sync, users
 
 
 def _require(var: str) -> str:
@@ -81,6 +81,8 @@ app.include_router(entries.router)
 app.include_router(users.router)
 app.include_router(admin.router)
 app.include_router(schema.router)
+app.include_router(sync.router)
+app.include_router(legal.router)
 
 
 @app.get("/health")
