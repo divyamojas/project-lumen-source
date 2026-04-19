@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoleUpdate(BaseModel):
@@ -86,14 +86,18 @@ class AdminTableUpdateRequest(BaseModel):
 
 
 class AdminTableQueryResponse(BaseModel):
-    schema: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(alias="schema")
     table: str
     rows: list[dict[str, Any]]
     row_count: int
 
 
 class AdminTableMutationResponse(BaseModel):
-    schema: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(alias="schema")
     table: str
     rows: list[dict[str, Any]]
     row_count: int

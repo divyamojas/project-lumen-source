@@ -30,6 +30,8 @@ from app.models.entry import EntryListResponse, EntryResponse
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_GENERIC_DATA_ALLOWED_SCHEMAS = {"public"}
+_GENERIC_DATA_DENYLIST = {"schema_migrations", "sql_audit_log", "admin_api_audit_log"}
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────
@@ -316,9 +318,32 @@ async def _set_role_for_user(supabase: AsyncClient, user_id: str, role: str, cal
     }).execute()
 
 
+async def _audit_admin_action(
+    request: Request,
+    caller_id: str,
+    action: str,
+    target: str,
+    request_data: dict[str, Any] | None = None,
+    row_count: int | None = None,
+    status_text: str = "success",
+) -> None:
+    try:
+        await request.app.state.supabase.table("admin_api_audit_log").insert({
+            "executed_by": caller_id,
+            "action": action,
+            "target": target,
+            "request_data": request_data or {},
+            "row_count": row_count,
+            "status": status_text,
+        }).execute()
+    except Exception as exc:
+        logger.warning("admin audit write failed action=%s target=%s: %s", action, target, exc)
+
+
 @router.post("/auth/users", response_model=AdminAuthUserResponse, status_code=201)
 async def create_auth_user(
     body: AdminAuthUserCreate,
+    request: Request,
     supabase: AsyncClient = Depends(get_supabase),
     caller_id: str = Depends(require_role("superuser")),
 ):
@@ -338,6 +363,14 @@ async def create_auth_user(
         raise HTTPException(status_code=502, detail="Supabase Auth user creation failed")
 
     await _set_role_for_user(supabase, user.id, body.role, caller_id)
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "auth_user_create",
+        user.id,
+        request_data={"email": body.email, "role": body.role},
+        status_text="created",
+    )
     return _normalize_auth_user_response(user, role=body.role)
 
 
@@ -345,6 +378,7 @@ async def create_auth_user(
 async def update_auth_user(
     target_id: str,
     body: AdminAuthUserUpdate,
+    request: Request,
     supabase: AsyncClient = Depends(get_supabase),
     caller_id: str = Depends(require_role("superuser")),
 ):
@@ -379,6 +413,15 @@ async def update_auth_user(
         await _set_role_for_user(supabase, target_id, body.role, caller_id)
         current_role = body.role
 
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "auth_user_update",
+        target_id,
+        request_data=body.model_dump(exclude_none=True),
+        status_text="updated",
+    )
+
     return _normalize_auth_user_response(user, role=current_role)
 
 
@@ -386,8 +429,9 @@ async def update_auth_user(
 async def invite_auth_user(
     target_id: str,
     body: AdminAuthActionRequest,
+    request: Request,
     supabase: AsyncClient = Depends(get_supabase),
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     auth_user = await supabase.auth.admin.get_user_by_id(target_id)
     user = auth_user.user if auth_user and getattr(auth_user, "user", None) else None
@@ -395,6 +439,14 @@ async def invite_auth_user(
         raise HTTPException(status_code=404, detail="User email not found")
 
     await supabase.auth.admin.invite_user_by_email(user.email, {"redirect_to": body.redirect_to} if body.redirect_to else {})
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "auth_user_invite",
+        target_id,
+        request_data=body.model_dump(exclude_none=True),
+        status_text="invited",
+    )
     return {"message": "Invite email requested"}
 
 
@@ -402,8 +454,9 @@ async def invite_auth_user(
 async def generate_auth_link(
     target_id: str,
     body: AdminAuthActionRequest,
+    request: Request,
     supabase: AsyncClient = Depends(get_supabase),
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     auth_user = await supabase.auth.admin.get_user_by_id(target_id)
     user = auth_user.user if auth_user and getattr(auth_user, "user", None) else None
@@ -416,6 +469,14 @@ async def generate_auth_link(
         **({"options": {"redirect_to": body.redirect_to}} if body.redirect_to else {}),
     }
     result = await supabase.auth.admin.generate_link(payload)
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "auth_user_generate_link",
+        target_id,
+        request_data=body.model_dump(exclude_none=True),
+        status_text="generated",
+    )
     return result if isinstance(result, dict) else getattr(result, "model_dump", lambda: {"data": str(result)})()
 
 
@@ -459,6 +520,19 @@ async def _table_exists(request: Request, schema_name: str, table_name: str) -> 
     return False
 
 
+def _assert_manageable_table(schema_name: str, table_name: str) -> None:
+    if schema_name not in _GENERIC_DATA_ALLOWED_SCHEMAS:
+        raise HTTPException(
+            status_code=403,
+            detail="Generic table APIs are limited to allowed application schemas",
+        )
+    if table_name in _GENERIC_DATA_DENYLIST:
+        raise HTTPException(
+            status_code=403,
+            detail="This table is protected; use dedicated admin endpoints or SQL instead",
+        )
+
+
 @router.get("/data/tables", response_model=AdminTableListResponse)
 async def list_data_tables(
     request: Request,
@@ -470,7 +544,7 @@ async def list_data_tables(
         snapshot = {}
     tables = sorted(snapshot.get("tables", {}).keys())
     if not include_system:
-        tables = [table for table in tables if table.startswith("public.") or table.startswith("auth.")]
+        tables = [table for table in tables if table.startswith("public.")]
     return AdminTableListResponse(tables=tables)
 
 
@@ -480,12 +554,13 @@ async def query_table_rows(
     table_name: str,
     body: AdminTableQueryRequest,
     request: Request,
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     import asyncpg
 
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
+    _assert_manageable_table(schema_name, table_name)
     if not await _table_exists(request, schema_name, table_name):
         raise HTTPException(status_code=404, detail="Table not found in schema snapshot")
 
@@ -520,8 +595,17 @@ async def query_table_rows(
     async with pool.acquire() as conn:
         rows = await conn.fetch(query, *values)
 
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "table_query",
+        f"{schema_name}.{table_name}",
+        request_data=body.model_dump(),
+        row_count=len(rows),
+    )
+
     return AdminTableQueryResponse(
-        schema=schema_name,
+        schema_name=schema_name,
         table=table_name,
         rows=[dict(row) for row in rows],
         row_count=len(rows),
@@ -534,12 +618,13 @@ async def insert_table_row(
     table_name: str,
     body: AdminTableMutationRequest,
     request: Request,
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     import asyncpg
 
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
+    _assert_manageable_table(schema_name, table_name)
     if not body.values:
         raise HTTPException(status_code=422, detail="values must not be empty")
     if not await _table_exists(request, schema_name, table_name):
@@ -562,8 +647,18 @@ async def insert_table_row(
     async with pool.acquire() as conn:
         rows = await conn.fetch(query, *values)
 
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "table_insert",
+        f"{schema_name}.{table_name}",
+        request_data={"values": body.values},
+        row_count=len(rows),
+        status_text="created",
+    )
+
     return AdminTableMutationResponse(
-        schema=schema_name,
+        schema_name=schema_name,
         table=table_name,
         rows=[dict(row) for row in rows],
         row_count=len(rows),
@@ -576,12 +671,13 @@ async def patch_table_rows(
     table_name: str,
     body: AdminTableUpdateRequest,
     request: Request,
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     import asyncpg
 
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
+    _assert_manageable_table(schema_name, table_name)
     if not body.values:
         raise HTTPException(status_code=422, detail="values must not be empty")
     if not body.filters:
@@ -605,8 +701,18 @@ async def patch_table_rows(
     async with pool.acquire() as conn:
         rows = await conn.fetch(query, *(values + filter_values))
 
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "table_update",
+        f"{schema_name}.{table_name}",
+        request_data=body.model_dump(),
+        row_count=len(rows),
+        status_text="updated",
+    )
+
     return AdminTableMutationResponse(
-        schema=schema_name,
+        schema_name=schema_name,
         table=table_name,
         rows=[dict(row) for row in rows],
         row_count=len(rows),
@@ -619,12 +725,13 @@ async def delete_table_rows(
     table_name: str,
     body: AdminTableDeleteRequest,
     request: Request,
-    _: str = Depends(require_role("superuser")),
+    caller_id: str = Depends(require_role("superuser")),
 ):
     import asyncpg
 
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
+    _assert_manageable_table(schema_name, table_name)
     if not body.filters:
         raise HTTPException(status_code=422, detail="filters must not be empty")
     if not await _table_exists(request, schema_name, table_name):
@@ -641,8 +748,18 @@ async def delete_table_rows(
     async with pool.acquire() as conn:
         rows = await conn.fetch(query, *values)
 
+    await _audit_admin_action(
+        request,
+        caller_id,
+        "table_delete",
+        f"{schema_name}.{table_name}",
+        request_data=body.model_dump(),
+        row_count=len(rows),
+        status_text="deleted",
+    )
+
     return AdminTableMutationResponse(
-        schema=schema_name,
+        schema_name=schema_name,
         table=table_name,
         rows=[dict(row) for row in rows],
         row_count=len(rows),

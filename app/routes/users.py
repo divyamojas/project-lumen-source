@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from supabase import AsyncClient
 
 from app.auth import get_current_user
-from app.dependencies import get_supabase
+from app.dependencies import get_supabase, get_user_role
 from app.models.auth import UserMeResponse
 
 logger = logging.getLogger(__name__)
@@ -25,19 +25,10 @@ async def get_me(
     user = auth_user.user if auth_user and getattr(auth_user, "user", None) else None
 
     try:
-        roles_res = (
-            await supabase.table("user_roles")
-            .select("role")
-            .eq("user_id", user_id)
-            .maybe_single()
-            .execute()
-        )
+        role = await get_user_role(supabase, user_id)
     except Exception as exc:
-        logger.warning("user_roles lookup failed for %s: %s", user_id, exc)
-        roles_res = None
-
-    role_data = getattr(roles_res, "data", None)
-    role = role_data["role"] if isinstance(role_data, dict) and role_data.get("role") else "user"
+        logger.warning("role resolution failed for %s: %s", user_id, exc)
+        role = "user"
 
     metadata = {}
     if user and getattr(user, "user_metadata", None):

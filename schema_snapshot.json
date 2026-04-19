@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-04-19T05:50:32.663206+00:00",
+  "captured_at": "2026-04-19T06:45:23.716800+00:00",
   "tables": {
     "auth.audit_log_entries": {
       "schema": "auth",
@@ -50,7 +50,16 @@
           "name": "audit_logs_instance_id_idx",
           "definition": "CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "audit_log_entries_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.custom_oauth_providers": {
       "schema": "auth",
@@ -250,7 +259,111 @@
           "name": "custom_oauth_providers_provider_type_idx",
           "definition": "CREATE INDEX custom_oauth_providers_provider_type_idx ON auth.custom_oauth_providers USING btree (provider_type)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "custom_oauth_providers_authorization_url_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((authorization_url IS NULL) OR (authorization_url ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_authorization_url_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((authorization_url IS NULL) OR (char_length(authorization_url) <= 2048)))"
+        },
+        {
+          "name": "custom_oauth_providers_client_id_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((char_length(client_id) >= 1) AND (char_length(client_id) <= 512)))"
+        },
+        {
+          "name": "custom_oauth_providers_discovery_url_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((discovery_url IS NULL) OR (char_length(discovery_url) <= 2048)))"
+        },
+        {
+          "name": "custom_oauth_providers_identifier_format",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((identifier ~ '^[a-z0-9][a-z0-9:-]{0,48}[a-z0-9]$'::text))"
+        },
+        {
+          "name": "custom_oauth_providers_identifier_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (identifier)"
+        },
+        {
+          "name": "custom_oauth_providers_issuer_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((issuer IS NULL) OR ((char_length(issuer) >= 1) AND (char_length(issuer) <= 2048))))"
+        },
+        {
+          "name": "custom_oauth_providers_jwks_uri_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((jwks_uri IS NULL) OR (jwks_uri ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_jwks_uri_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((jwks_uri IS NULL) OR (char_length(jwks_uri) <= 2048)))"
+        },
+        {
+          "name": "custom_oauth_providers_name_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((char_length(name) >= 1) AND (char_length(name) <= 100)))"
+        },
+        {
+          "name": "custom_oauth_providers_oauth2_requires_endpoints",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((provider_type <> 'oauth2'::text) OR ((authorization_url IS NOT NULL) AND (token_url IS NOT NULL) AND (userinfo_url IS NOT NULL))))"
+        },
+        {
+          "name": "custom_oauth_providers_oidc_discovery_url_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((provider_type <> 'oidc'::text) OR (discovery_url IS NULL) OR (discovery_url ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_oidc_issuer_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((provider_type <> 'oidc'::text) OR (issuer IS NULL) OR (issuer ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_oidc_requires_issuer",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((provider_type <> 'oidc'::text) OR (issuer IS NOT NULL)))"
+        },
+        {
+          "name": "custom_oauth_providers_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "custom_oauth_providers_provider_type_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((provider_type = ANY (ARRAY['oauth2'::text, 'oidc'::text])))"
+        },
+        {
+          "name": "custom_oauth_providers_token_url_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((token_url IS NULL) OR (token_url ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_token_url_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((token_url IS NULL) OR (char_length(token_url) <= 2048)))"
+        },
+        {
+          "name": "custom_oauth_providers_userinfo_url_https",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((userinfo_url IS NULL) OR (userinfo_url ~~ 'https://%'::text)))"
+        },
+        {
+          "name": "custom_oauth_providers_userinfo_url_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((userinfo_url IS NULL) OR (char_length(userinfo_url) <= 2048)))"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.flow_state": {
       "schema": "auth",
@@ -393,7 +506,16 @@
           "name": "idx_user_id_auth_method",
           "definition": "CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "flow_state_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.identities": {
       "schema": "auth",
@@ -480,7 +602,26 @@
           "name": "identities_user_id_idx",
           "definition": "CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "identities_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "identities_provider_id_provider_unique",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (provider_id, provider)"
+        },
+        {
+          "name": "identities_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.instances": {
       "schema": "auth",
@@ -527,7 +668,16 @@
           "name": "instances_pkey",
           "definition": "CREATE UNIQUE INDEX instances_pkey ON auth.instances USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "instances_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.mfa_amr_claims": {
       "schema": "auth",
@@ -578,7 +728,26 @@
           "name": "mfa_amr_claims_session_id_authentication_method_pkey",
           "definition": "CREATE UNIQUE INDEX mfa_amr_claims_session_id_authentication_method_pkey ON auth.mfa_amr_claims USING btree (session_id, authentication_method)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "amr_id_pk",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "mfa_amr_claims_session_id_authentication_method_pkey",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (session_id, authentication_method)"
+        },
+        {
+          "name": "mfa_amr_claims_session_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.mfa_challenges": {
       "schema": "auth",
@@ -643,7 +812,21 @@
           "name": "mfa_challenges_pkey",
           "definition": "CREATE UNIQUE INDEX mfa_challenges_pkey ON auth.mfa_challenges USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "mfa_challenges_auth_factor_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (factor_id) REFERENCES auth.mfa_factors(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "mfa_challenges_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.mfa_factors": {
       "schema": "auth",
@@ -766,7 +949,26 @@
           "name": "unique_phone_factor_per_user",
           "definition": "CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "mfa_factors_last_challenged_at_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (last_challenged_at)"
+        },
+        {
+          "name": "mfa_factors_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "mfa_factors_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.oauth_authorizations": {
       "schema": "auth",
@@ -909,7 +1111,76 @@
           "name": "oauth_authorizations_pkey",
           "definition": "CREATE UNIQUE INDEX oauth_authorizations_pkey ON auth.oauth_authorizations USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "oauth_authorizations_authorization_code_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (authorization_code)"
+        },
+        {
+          "name": "oauth_authorizations_authorization_code_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(authorization_code) <= 255))"
+        },
+        {
+          "name": "oauth_authorizations_authorization_id_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (authorization_id)"
+        },
+        {
+          "name": "oauth_authorizations_client_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "oauth_authorizations_code_challenge_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(code_challenge) <= 128))"
+        },
+        {
+          "name": "oauth_authorizations_expires_at_future",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((expires_at > created_at))"
+        },
+        {
+          "name": "oauth_authorizations_nonce_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(nonce) <= 255))"
+        },
+        {
+          "name": "oauth_authorizations_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "oauth_authorizations_redirect_uri_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(redirect_uri) <= 2048))"
+        },
+        {
+          "name": "oauth_authorizations_resource_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(resource) <= 2048))"
+        },
+        {
+          "name": "oauth_authorizations_scope_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(scope) <= 4096))"
+        },
+        {
+          "name": "oauth_authorizations_state_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(state) <= 4096))"
+        },
+        {
+          "name": "oauth_authorizations_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.oauth_client_states": {
       "schema": "auth",
@@ -953,7 +1224,16 @@
           "name": "oauth_client_states_pkey",
           "definition": "CREATE UNIQUE INDEX oauth_client_states_pkey ON auth.oauth_client_states USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "oauth_client_states_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.oauth_clients": {
       "schema": "auth",
@@ -1060,7 +1340,36 @@
           "name": "oauth_clients_pkey",
           "definition": "CREATE UNIQUE INDEX oauth_clients_pkey ON auth.oauth_clients USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "oauth_clients_client_name_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(client_name) <= 1024))"
+        },
+        {
+          "name": "oauth_clients_client_uri_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(client_uri) <= 2048))"
+        },
+        {
+          "name": "oauth_clients_logo_uri_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(logo_uri) <= 2048))"
+        },
+        {
+          "name": "oauth_clients_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "oauth_clients_token_endpoint_auth_method_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((token_endpoint_auth_method = ANY (ARRAY['client_secret_basic'::text, 'client_secret_post'::text, 'none'::text])))"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.oauth_consents": {
       "schema": "auth",
@@ -1130,7 +1439,46 @@
           "name": "oauth_consents_user_order_idx",
           "definition": "CREATE INDEX oauth_consents_user_order_idx ON auth.oauth_consents USING btree (user_id, granted_at DESC)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "oauth_consents_client_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "oauth_consents_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "oauth_consents_revoked_after_granted",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((revoked_at IS NULL) OR (revoked_at >= granted_at)))"
+        },
+        {
+          "name": "oauth_consents_scopes_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(scopes) <= 2048))"
+        },
+        {
+          "name": "oauth_consents_scopes_not_empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(TRIM(BOTH FROM scopes)) > 0))"
+        },
+        {
+          "name": "oauth_consents_user_client_unique",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (user_id, client_id)"
+        },
+        {
+          "name": "oauth_consents_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.one_time_tokens": {
       "schema": "auth",
@@ -1203,7 +1551,26 @@
           "name": "one_time_tokens_user_id_token_type_key",
           "definition": "CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "one_time_tokens_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "one_time_tokens_token_hash_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(token_hash) > 0))"
+        },
+        {
+          "name": "one_time_tokens_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.refresh_tokens": {
       "schema": "auth",
@@ -1302,7 +1669,26 @@
           "name": "refresh_tokens_updated_at_idx",
           "definition": "CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "refresh_tokens_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "refresh_tokens_session_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "refresh_tokens_token_unique",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (token)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.saml_providers": {
       "schema": "auth",
@@ -1385,7 +1771,41 @@
           "name": "saml_providers_sso_provider_id_idx",
           "definition": "CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "entity_id not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(entity_id) > 0))"
+        },
+        {
+          "name": "metadata_url not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((metadata_url = NULL::text) OR (char_length(metadata_url) > 0)))"
+        },
+        {
+          "name": "metadata_xml not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(metadata_xml) > 0))"
+        },
+        {
+          "name": "saml_providers_entity_id_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (entity_id)"
+        },
+        {
+          "name": "saml_providers_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "saml_providers_sso_provider_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.saml_relay_states": {
       "schema": "auth",
@@ -1465,7 +1885,31 @@
           "name": "saml_relay_states_sso_provider_id_idx",
           "definition": "CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "request_id not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(request_id) > 0))"
+        },
+        {
+          "name": "saml_relay_states_flow_state_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (flow_state_id) REFERENCES auth.flow_state(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "saml_relay_states_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "saml_relay_states_sso_provider_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.schema_migrations": {
       "schema": "auth",
@@ -1484,7 +1928,16 @@
           "name": "schema_migrations_pkey",
           "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON auth.schema_migrations USING btree (version)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "schema_migrations_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (version)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.sessions": {
       "schema": "auth",
@@ -1617,7 +2070,31 @@
           "name": "user_id_created_at_idx",
           "definition": "CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "sessions_oauth_client_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (oauth_client_id) REFERENCES auth.oauth_clients(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "sessions_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "sessions_scopes_length",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(scopes) <= 4096))"
+        },
+        {
+          "name": "sessions_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.sso_domains": {
       "schema": "auth",
@@ -1672,7 +2149,26 @@
           "name": "sso_domains_sso_provider_id_idx",
           "definition": "CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "domain not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(domain) > 0))"
+        },
+        {
+          "name": "sso_domains_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "sso_domains_sso_provider_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.sso_providers": {
       "schema": "auth",
@@ -1727,7 +2223,21 @@
           "name": "sso_providers_resource_id_pattern_idx",
           "definition": "CREATE INDEX sso_providers_resource_id_pattern_idx ON auth.sso_providers USING btree (resource_id text_pattern_ops)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "resource_id not empty",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((resource_id = NULL::text) OR (char_length(resource_id) > 0)))"
+        },
+        {
+          "name": "sso_providers_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.users": {
       "schema": "auth",
@@ -2040,7 +2550,26 @@
           "name": "users_pkey",
           "definition": "CREATE UNIQUE INDEX users_pkey ON auth.users USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "users_email_change_confirm_status_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((email_change_confirm_status >= 0) AND (email_change_confirm_status <= 2)))"
+        },
+        {
+          "name": "users_phone_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (phone)"
+        },
+        {
+          "name": "users_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.webauthn_challenges": {
       "schema": "auth",
@@ -2102,7 +2631,26 @@
           "name": "webauthn_challenges_user_id_idx",
           "definition": "CREATE INDEX webauthn_challenges_user_id_idx ON auth.webauthn_challenges USING btree (user_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "webauthn_challenges_challenge_type_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((challenge_type = ANY (ARRAY['signup'::text, 'registration'::text, 'authentication'::text])))"
+        },
+        {
+          "name": "webauthn_challenges_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "webauthn_challenges_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "auth.webauthn_credentials": {
       "schema": "auth",
@@ -2220,7 +2768,115 @@
           "name": "webauthn_credentials_user_id_idx",
           "definition": "CREATE INDEX webauthn_credentials_user_id_idx ON auth.webauthn_credentials USING btree (user_id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "webauthn_credentials_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "webauthn_credentials_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
+    },
+    "public.admin_api_audit_log": {
+      "schema": "public",
+      "name": "admin_api_audit_log",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "executed_by",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "target",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "request_data",
+          "type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb"
+        },
+        {
+          "name": "row_count",
+          "type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "'success'::text"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "admin_api_audit_log_action_idx",
+          "definition": "CREATE INDEX admin_api_audit_log_action_idx ON public.admin_api_audit_log USING btree (action)"
+        },
+        {
+          "name": "admin_api_audit_log_created_at_idx",
+          "definition": "CREATE INDEX admin_api_audit_log_created_at_idx ON public.admin_api_audit_log USING btree (created_at DESC)"
+        },
+        {
+          "name": "admin_api_audit_log_executed_by_idx",
+          "definition": "CREATE INDEX admin_api_audit_log_executed_by_idx ON public.admin_api_audit_log USING btree (executed_by)"
+        },
+        {
+          "name": "admin_api_audit_log_pkey",
+          "definition": "CREATE UNIQUE INDEX admin_api_audit_log_pkey ON public.admin_api_audit_log USING btree (id)"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "admin_api_audit_log_executed_by_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (executed_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "admin_api_audit_log_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "public.entries": {
       "schema": "public",
@@ -2357,14 +3013,55 @@
           "definition": "CREATE INDEX entries_tags_gin_idx ON public.entries USING gin (tags)"
         },
         {
+          "name": "entries_user_collection_created_idx",
+          "definition": "CREATE INDEX entries_user_collection_created_idx ON public.entries USING btree (user_id, collection, \"createdAt\" DESC)"
+        },
+        {
           "name": "entries_user_created_idx",
           "definition": "CREATE INDEX entries_user_created_idx ON public.entries USING btree (user_id, \"createdAt\" DESC)"
         },
         {
+          "name": "entries_user_favorite_created_idx",
+          "definition": "CREATE INDEX entries_user_favorite_created_idx ON public.entries USING btree (user_id, favorite, \"createdAt\" DESC)"
+        },
+        {
           "name": "entries_user_id_idx",
           "definition": "CREATE INDEX entries_user_id_idx ON public.entries USING btree (user_id)"
+        },
+        {
+          "name": "entries_user_pinned_created_idx",
+          "definition": "CREATE INDEX entries_user_pinned_created_idx ON public.entries USING btree (user_id, pinned, \"createdAt\" DESC)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "entries_body_non_empty_chk",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((char_length(btrim(body)) > 0))"
+        },
+        {
+          "name": "entries_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "entries_title_trimmed_chk",
+          "constraint_type": "CHECK",
+          "definition": "CHECK (((char_length(btrim(title)) >= 1) AND (char_length(btrim(title)) <= 100)))"
+        },
+        {
+          "name": "entries_updated_after_created_chk",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((\"updatedAt\" >= \"createdAt\"))"
+        },
+        {
+          "name": "entries_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "public.schema_migrations": {
       "schema": "public",
@@ -2393,8 +3090,8 @@
         },
         {
           "name": "applied_by",
-          "type": "text",
-          "udt_name": "text",
+          "type": "uuid",
+          "udt_name": "uuid",
           "nullable": true,
           "default": null
         },
@@ -2408,6 +3105,10 @@
       ],
       "indexes": [
         {
+          "name": "schema_migrations_applied_by_idx",
+          "definition": "CREATE INDEX schema_migrations_applied_by_idx ON public.schema_migrations USING btree (applied_by)"
+        },
+        {
           "name": "schema_migrations_filename_key",
           "definition": "CREATE UNIQUE INDEX schema_migrations_filename_key ON public.schema_migrations USING btree (filename)"
         },
@@ -2415,7 +3116,26 @@
           "name": "schema_migrations_pkey",
           "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON public.schema_migrations USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "schema_migrations_applied_by_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (applied_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "schema_migrations_filename_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (filename)"
+        },
+        {
+          "name": "schema_migrations_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "public.sql_audit_log": {
       "schema": "public",
@@ -2484,7 +3204,21 @@
           "name": "sql_audit_log_pkey",
           "definition": "CREATE UNIQUE INDEX sql_audit_log_pkey ON public.sql_audit_log USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "sql_audit_log_executed_by_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (executed_by) REFERENCES auth.users(id)"
+        },
+        {
+          "name": "sql_audit_log_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "public.user_roles": {
       "schema": "public",
@@ -2528,7 +3262,31 @@
           "name": "user_roles_role_idx",
           "definition": "CREATE INDEX user_roles_role_idx ON public.user_roles USING btree (role)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "user_roles_assigned_by_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (assigned_by) REFERENCES auth.users(id)"
+        },
+        {
+          "name": "user_roles_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (user_id)"
+        },
+        {
+          "name": "user_roles_role_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((role = ANY (ARRAY['user'::text, 'admin'::text, 'superuser'::text])))"
+        },
+        {
+          "name": "user_roles_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "realtime.messages": {
       "schema": "realtime",
@@ -2600,7 +3358,16 @@
           "name": "messages_pkey",
           "definition": "CREATE UNIQUE INDEX messages_pkey ON ONLY realtime.messages USING btree (id, inserted_at)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "messages_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id, inserted_at)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "realtime.schema_migrations": {
       "schema": "realtime",
@@ -2626,7 +3393,16 @@
           "name": "schema_migrations_pkey",
           "definition": "CREATE UNIQUE INDEX schema_migrations_pkey ON realtime.schema_migrations USING btree (version)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "schema_migrations_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (version)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "realtime.subscription": {
       "schema": "realtime",
@@ -2702,7 +3478,31 @@
           "name": "subscription_subscription_id_entity_filters_action_filter_key",
           "definition": "CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_action_filter_key ON realtime.subscription USING btree (subscription_id, entity, filters, action_filter)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "pk_subscription",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "subscription_action_filter_check",
+          "constraint_type": "CHECK",
+          "definition": "CHECK ((action_filter = ANY (ARRAY['*'::text, 'INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))"
+        }
+      ],
+      "triggers": [
+        {
+          "name": "tr_check_filters",
+          "timing": "BEFORE",
+          "events": [
+            "INSERT",
+            "UPDATE"
+          ],
+          "statement": "EXECUTE FUNCTION realtime.subscription_check_filters()"
+        }
+      ],
+      "policies": []
     },
     "storage.buckets": {
       "schema": "storage",
@@ -2795,7 +3595,34 @@
           "name": "buckets_pkey",
           "definition": "CREATE UNIQUE INDEX buckets_pkey ON storage.buckets USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "buckets_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [
+        {
+          "name": "enforce_bucket_name_length_trigger",
+          "timing": "BEFORE",
+          "events": [
+            "INSERT",
+            "UPDATE"
+          ],
+          "statement": "EXECUTE FUNCTION storage.enforce_bucket_name_length()"
+        },
+        {
+          "name": "protect_buckets_delete",
+          "timing": "BEFORE",
+          "events": [
+            "DELETE"
+          ],
+          "statement": "EXECUTE FUNCTION storage.protect_delete()"
+        }
+      ],
+      "policies": []
     },
     "storage.buckets_analytics": {
       "schema": "storage",
@@ -2860,7 +3687,16 @@
           "name": "buckets_analytics_unique_name_idx",
           "definition": "CREATE UNIQUE INDEX buckets_analytics_unique_name_idx ON storage.buckets_analytics USING btree (name) WHERE (deleted_at IS NULL)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "buckets_analytics_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "storage.buckets_vectors": {
       "schema": "storage",
@@ -2900,7 +3736,16 @@
           "name": "buckets_vectors_pkey",
           "definition": "CREATE UNIQUE INDEX buckets_vectors_pkey ON storage.buckets_vectors USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "buckets_vectors_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "storage.migrations": {
       "schema": "storage",
@@ -2944,7 +3789,21 @@
           "name": "migrations_pkey",
           "definition": "CREATE UNIQUE INDEX migrations_pkey ON storage.migrations USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "migrations_name_key",
+          "constraint_type": "UNIQUE",
+          "definition": "UNIQUE (name)"
+        },
+        {
+          "name": "migrations_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "storage.objects": {
       "schema": "storage",
@@ -3056,7 +3915,38 @@
           "name": "objects_pkey",
           "definition": "CREATE UNIQUE INDEX objects_pkey ON storage.objects USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "objects_bucketId_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+        },
+        {
+          "name": "objects_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [
+        {
+          "name": "protect_objects_delete",
+          "timing": "BEFORE",
+          "events": [
+            "DELETE"
+          ],
+          "statement": "EXECUTE FUNCTION storage.protect_delete()"
+        },
+        {
+          "name": "update_objects_updated_at",
+          "timing": "BEFORE",
+          "events": [
+            "UPDATE"
+          ],
+          "statement": "EXECUTE FUNCTION storage.update_updated_at_column()"
+        }
+      ],
+      "policies": []
     },
     "storage.s3_multipart_uploads": {
       "schema": "storage",
@@ -3142,7 +4032,21 @@
           "name": "s3_multipart_uploads_pkey",
           "definition": "CREATE UNIQUE INDEX s3_multipart_uploads_pkey ON storage.s3_multipart_uploads USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "s3_multipart_uploads_bucket_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+        },
+        {
+          "name": "s3_multipart_uploads_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "storage.s3_multipart_uploads_parts": {
       "schema": "storage",
@@ -3224,7 +4128,26 @@
           "name": "s3_multipart_uploads_parts_pkey",
           "definition": "CREATE UNIQUE INDEX s3_multipart_uploads_parts_pkey ON storage.s3_multipart_uploads_parts USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "s3_multipart_uploads_parts_bucket_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id)"
+        },
+        {
+          "name": "s3_multipart_uploads_parts_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "s3_multipart_uploads_parts_upload_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (upload_id) REFERENCES storage.s3_multipart_uploads(id) ON DELETE CASCADE"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "storage.vector_indexes": {
       "schema": "storage",
@@ -3303,7 +4226,21 @@
           "name": "vector_indexes_pkey",
           "definition": "CREATE UNIQUE INDEX vector_indexes_pkey ON storage.vector_indexes USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "vector_indexes_bucket_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (bucket_id) REFERENCES storage.buckets_vectors(id)"
+        },
+        {
+          "name": "vector_indexes_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     },
     "vault.secrets": {
       "schema": "vault",
@@ -3375,7 +4312,16 @@
           "name": "secrets_pkey",
           "definition": "CREATE UNIQUE INDEX secrets_pkey ON vault.secrets USING btree (id)"
         }
-      ]
+      ],
+      "constraints": [
+        {
+          "name": "secrets_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
     }
   }
 }

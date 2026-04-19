@@ -58,6 +58,56 @@ async def take_schema_snapshot(pool: asyncpg.Pool) -> dict:
             ORDER BY schemaname, tablename, indexname
         """)
 
+        constraints = await conn.fetch("""
+            SELECT
+                ns.nspname AS table_schema,
+                cls.relname AS table_name,
+                con.conname AS constraint_name,
+                CASE con.contype
+                    WHEN 'p' THEN 'PRIMARY KEY'
+                    WHEN 'f' THEN 'FOREIGN KEY'
+                    WHEN 'u' THEN 'UNIQUE'
+                    WHEN 'c' THEN 'CHECK'
+                    WHEN 'x' THEN 'EXCLUDE'
+                    ELSE con.contype::text
+                END AS constraint_type,
+                pg_get_constraintdef(con.oid) AS definition
+            FROM pg_constraint con
+            JOIN pg_class cls ON cls.oid = con.conrelid
+            JOIN pg_namespace ns ON ns.oid = cls.relnamespace
+            WHERE ns.nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+            ORDER BY ns.nspname, cls.relname, con.conname
+        """)
+
+        triggers = await conn.fetch("""
+            SELECT
+                event_object_schema AS table_schema,
+                event_object_table AS table_name,
+                trigger_name,
+                action_timing,
+                array_agg(DISTINCT event_manipulation ORDER BY event_manipulation) AS events,
+                action_statement
+            FROM information_schema.triggers
+            WHERE event_object_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+            GROUP BY event_object_schema, event_object_table, trigger_name, action_timing, action_statement
+            ORDER BY event_object_schema, event_object_table, trigger_name
+        """)
+
+        policies = await conn.fetch("""
+            SELECT
+                schemaname,
+                tablename,
+                policyname,
+                permissive,
+                roles,
+                cmd,
+                qual,
+                with_check
+            FROM pg_policies
+            WHERE schemaname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+            ORDER BY schemaname, tablename, policyname
+        """)
+
     tables: dict = {}
     for row in rows:
         key = f"{row['table_schema']}.{row['table_name']}"
@@ -67,6 +117,9 @@ async def take_schema_snapshot(pool: asyncpg.Pool) -> dict:
                 "name": row["table_name"],
                 "columns": [],
                 "indexes": [],
+                "constraints": [],
+                "triggers": [],
+                "policies": [],
             }
         tables[key]["columns"].append({
             "name": row["column_name"],
@@ -82,6 +135,37 @@ async def take_schema_snapshot(pool: asyncpg.Pool) -> dict:
             tables[key]["indexes"].append({
                 "name": idx["indexname"],
                 "definition": idx["indexdef"],
+            })
+
+    for constraint in constraints:
+        key = f"{constraint['table_schema']}.{constraint['table_name']}"
+        if key in tables:
+            tables[key]["constraints"].append({
+                "name": constraint["constraint_name"],
+                "constraint_type": constraint["constraint_type"],
+                "definition": constraint["definition"],
+            })
+
+    for trigger in triggers:
+        key = f"{trigger['table_schema']}.{trigger['table_name']}"
+        if key in tables:
+            tables[key]["triggers"].append({
+                "name": trigger["trigger_name"],
+                "timing": trigger["action_timing"],
+                "events": list(trigger["events"] or []),
+                "statement": trigger["action_statement"],
+            })
+
+    for policy in policies:
+        key = f"{policy['schemaname']}.{policy['tablename']}"
+        if key in tables:
+            tables[key]["policies"].append({
+                "name": policy["policyname"],
+                "permissive": policy["permissive"],
+                "command": policy["cmd"],
+                "roles": list(policy["roles"] or []),
+                "using_expression": policy["qual"],
+                "with_check_expression": policy["with_check"],
             })
 
     snapshot = {
@@ -109,7 +193,7 @@ async def ensure_migrations_table(pool: asyncpg.Pool) -> None:
                 id          SERIAL PRIMARY KEY,
                 filename    TEXT UNIQUE NOT NULL,
                 checksum    TEXT NOT NULL,
-                applied_by  TEXT,
+                applied_by  UUID REFERENCES auth.users(id) ON DELETE SET NULL,
                 applied_at  TIMESTAMPTZ DEFAULT now()
             )
         """)
@@ -137,7 +221,7 @@ async def get_applied_migrations(pool: asyncpg.Pool) -> dict[str, dict]:
     return {
         r["filename"]: {
             "checksum": r["checksum"],
-            "applied_by": r["applied_by"],
+            "applied_by": str(r["applied_by"]) if r["applied_by"] else None,
             "applied_at": r["applied_at"].isoformat() if r["applied_at"] else None,
         }
         for r in rows

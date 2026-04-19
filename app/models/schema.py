@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ColumnInfo(BaseModel):
@@ -15,11 +15,38 @@ class IndexInfo(BaseModel):
     definition: str
 
 
+class ConstraintInfo(BaseModel):
+    name: str
+    constraint_type: str
+    definition: str
+
+
+class TriggerInfo(BaseModel):
+    name: str
+    timing: str
+    events: list[str] = Field(default_factory=list)
+    statement: str
+
+
+class PolicyInfo(BaseModel):
+    name: str
+    permissive: str
+    command: str
+    roles: list[str] = Field(default_factory=list)
+    using_expression: Optional[str] = None
+    with_check_expression: Optional[str] = None
+
+
 class TableInfo(BaseModel):
-    schema: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_name: str = Field(alias="schema")
     name: str
     columns: list[ColumnInfo]
-    indexes: list[IndexInfo] = []
+    indexes: list[IndexInfo] = Field(default_factory=list)
+    constraints: list[ConstraintInfo] = Field(default_factory=list)
+    triggers: list[TriggerInfo] = Field(default_factory=list)
+    policies: list[PolicyInfo] = Field(default_factory=list)
 
 
 class SchemaSnapshot(BaseModel):
