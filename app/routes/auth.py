@@ -118,26 +118,14 @@ async def _supabase_auth_request(
 
 
 @router.get("/google/start", response_model=AuthUrlResponse)
+@router.get("/google", response_model=AuthUrlResponse)
+@router.get("/login/google", response_model=AuthUrlResponse)
 async def start_google_auth(
     redirect_to: str = Query(..., description="Frontend callback URL"),
 ):
     supabase_url, _ = _require_auth_env()
     query = urlencode({"provider": "google", "redirect_to": redirect_to})
     return AuthUrlResponse(url=f"{supabase_url}/auth/v1/authorize?{query}")
-
-
-@router.get("/google", response_model=AuthUrlResponse)
-async def start_google_auth_alias(
-    redirect_to: str = Query(..., description="Frontend callback URL"),
-):
-    return await start_google_auth(redirect_to)
-
-
-@router.get("/login/google", response_model=AuthUrlResponse)
-async def start_google_login_alias(
-    redirect_to: str = Query(..., description="Frontend callback URL"),
-):
-    return await start_google_auth(redirect_to)
 
 
 @router.post("/login")
@@ -150,6 +138,8 @@ async def login_with_password(body: AuthLoginRequest):
 
 
 @router.post("/sign-up")
+@router.post("/signup")
+@router.post("/register")
 async def sign_up(body: AuthSignupRequest, supabase: AsyncClient = Depends(get_supabase)):
     full_name = body.full_name.strip() or body.name.strip()
     signup_payload = {
@@ -167,17 +157,9 @@ async def sign_up(body: AuthSignupRequest, supabase: AsyncClient = Depends(get_s
     return payload
 
 
-@router.post("/signup")
-async def sign_up_alias(body: AuthSignupRequest, supabase: AsyncClient = Depends(get_supabase)):
-    return await sign_up(body, supabase)
-
-
-@router.post("/register")
-async def register_alias(body: AuthSignupRequest, supabase: AsyncClient = Depends(get_supabase)):
-    return await sign_up(body, supabase)
-
-
 @router.post("/reset-password", status_code=200)
+@router.post("/password/reset", status_code=200)
+@router.post("/forgot-password", status_code=200)
 async def reset_password(body: PasswordResetRequest, request: FastAPIRequest):
     redirect_to = DEFAULT_RESET_REDIRECT_TO
     if not redirect_to:
@@ -191,16 +173,6 @@ async def reset_password(body: PasswordResetRequest, request: FastAPIRequest):
 
     await _supabase_auth_request("/auth/v1/recover", payload=payload)
     return {"message": "Password reset email sent"}
-
-
-@router.post("/password/reset", status_code=200)
-async def reset_password_alias(body: PasswordResetRequest, request: FastAPIRequest):
-    return await reset_password(body, request)
-
-
-@router.post("/forgot-password", status_code=200)
-async def forgot_password_alias(body: PasswordResetRequest, request: FastAPIRequest):
-    return await reset_password(body, request)
 
 
 @router.post("/logout", status_code=204)
