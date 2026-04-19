@@ -3,7 +3,8 @@
 ## Current State (as of 2026-04-19)
 FastAPI backend for the Lumen journal app.
 It now serves the live auth and admin surface used by the frontend: backend-managed auth, entry CRUD, RBAC,
-schema introspection, file-based migrations, raw SQL, and broader superuser admin APIs for auth users and table data.
+schema introspection, file-based migrations, raw SQL, broader superuser admin APIs for auth users and table data,
+S3 sync (Phase 2), account/entry deletion, and legal endpoints.
 
 ## Agent Files
 `AGENTS.md` is the lean Codex-facing companion to this file.
@@ -23,19 +24,26 @@ app/
   dependencies.py   — get_supabase, get_db_pool, require_role(minimum_role)
   routes/
     auth.py         — backend auth endpoints for login/signup/reset/google start/logout
-    entries.py      — user-scoped entry CRUD
-    users.py        — current-user resolution (`/users/me`)
+    entries.py      — user-scoped entry CRUD (calls S3 sync on write/delete)
+    users.py        — /users/me, DELETE /users/me, DELETE /users/me/entries
     admin.py        — admin stats, user management, cross-user entry access, auth-user admin, generic table data admin
     schema.py       — schema snapshot, migrations, raw SQL
+    sync.py         — GET /sync/status, POST /sync/full (S3 backfill, admin-only)
+    legal.py        — GET /legal/privacy, GET /legal/terms
   models/
     auth.py         — auth request/response models
-    entry.py        — entry models
+    entry.py        — entry models (includes JournalType enum, journal_type, type_metadata)
     admin.py        — admin and table-management models
     schema.py       — schema snapshot, migration, SQL models
+  services/
+    s3_sync.py      — sync_entry_to_s3, delete_entry_from_s3 (fire-and-forget, disabled when S3_SYNC_ENABLED=false)
 migrations/
   0001_create_entries.sql
   0002_create_user_roles.sql
   0003_create_sql_audit_log.sql
+  0004_optimize_entries_and_harden_migration_audit.sql
+  0005_create_admin_api_audit_log.sql
+  0006_add_journal_type.sql
 ```
 
 ## Stack
@@ -45,6 +53,7 @@ migrations/
 - supabase-py 2.28
 - PyJWT
 - asyncpg 0.29
+- boto3 1.34+ (S3 sync)
 - No ORM anywhere
 
 ## Startup Sequence
@@ -98,7 +107,15 @@ Safety guards already enforced:
 User routes:
 - `/entries`
 - `/users/me`
+- `DELETE /users/me` — deletes account + all entries; requires `{ "confirm": "DELETE MY ACCOUNT" }` body
+- `DELETE /users/me/entries` — deletes all entries, keeps account
 - `/health`
+- `GET /legal/privacy`
+- `GET /legal/terms`
+
+Sync routes:
+- `GET /sync/status` — reports S3 sync enabled/reachable state
+- `POST /sync/full` — admin-only S3 backfill for all user entries
 
 `GET /health` should return `200` and currently reports:
 - `status: "ok"` when `app.state.db_pool` exists
@@ -164,6 +181,13 @@ Optional or legacy:
 - `PASSWORD_RESET_REDIRECT_TO`
 - `CORS_ORIGINS`
 
+S3 sync (Phase 2):
+- `S3_SYNC_ENABLED` — set to `true` to activate (default: `false`)
+- `S3_BUCKET_NAME`
+- `AWS_REGION` (default: `ap-south-1`)
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
 ## Rules
 - No ORM — Supabase client or asyncpg only
 - No hardcoded secrets — all config from `.env`
@@ -176,5 +200,5 @@ Optional or legacy:
 
 ## Out of Scope
 - Frontend implementation details
-- AWS/S3/Lambda/Bedrock/Comprehend work unless explicitly requested
+- AWS Lambda/Bedrock/Comprehend work unless explicitly requested
 - Replacing Supabase/Auth/Postgres with another stack
