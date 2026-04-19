@@ -25,6 +25,16 @@ jobs:
           pip install ruff
           ruff check .
 
+      - name: Verify test coverage
+        run: |
+          pip install pytest httpx
+          pytest tests/ -v --tb=short --co -q
+        env:
+          S3_SYNC_ENABLED: "false"
+          SUPABASE_URL: "https://test.supabase.co"
+          SUPABASE_SECRET_KEY: "test-secret"
+          SUPABASE_PUBLISHABLE_KEY: "test-pub"
+
       - name: Run tests
         run: |
           pip install pytest httpx

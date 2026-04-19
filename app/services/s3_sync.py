@@ -1,15 +1,27 @@
-import boto3
 import json
 import os
 from datetime import datetime, timezone
+
+try:
+    import boto3
+
+    _boto3_available = True
+except ImportError:
+    boto3 = None
+    _boto3_available = False
 
 S3_SYNC_ENABLED = os.getenv("S3_SYNC_ENABLED", "false").lower() == "true"
 BUCKET = os.getenv("S3_BUCKET_NAME", "")
 REGION = os.getenv("AWS_REGION", "ap-south-1")
 
+_s3_client = None
 
-def get_s3_client():
-    return boto3.client("s3", region_name=REGION)
+
+def _get_s3():
+    global _s3_client
+    if _s3_client is None:
+        _s3_client = boto3.client("s3", region_name=REGION)
+    return _s3_client
 
 
 def sync_entry_to_s3(user_id: str, entry: dict) -> bool:
@@ -18,10 +30,10 @@ def sync_entry_to_s3(user_id: str, entry: dict) -> bool:
     Key pattern: journals/{user_id}/{entry_id}.json
     Returns True on success, False if sync is disabled or fails.
     """
-    if not S3_SYNC_ENABLED or not BUCKET:
+    if not S3_SYNC_ENABLED or not BUCKET or not _boto3_available:
         return False
     try:
-        client = get_s3_client()
+        client = _get_s3()
         key = f"journals/{user_id}/{entry['id']}.json"
         payload = {
             **entry,
@@ -42,10 +54,10 @@ def sync_entry_to_s3(user_id: str, entry: dict) -> bool:
 
 def delete_entry_from_s3(user_id: str, entry_id: str) -> bool:
     """Remove an entry from S3 when deleted from the app."""
-    if not S3_SYNC_ENABLED or not BUCKET:
+    if not S3_SYNC_ENABLED or not BUCKET or not _boto3_available:
         return False
     try:
-        client = get_s3_client()
+        client = _get_s3()
         key = f"journals/{user_id}/{entry_id}.json"
         client.delete_object(Bucket=BUCKET, Key=key)
         return True

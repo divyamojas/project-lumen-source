@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -20,7 +21,7 @@ async def create_entry(
     data = {**entry.model_dump(), "user_id": user_id}
     result = await supabase.table("entries").insert(data).execute()
     row = result.data[0]
-    sync_entry_to_s3(user_id, row)
+    asyncio.ensure_future(asyncio.to_thread(sync_entry_to_s3, user_id, row))
     return row
 
 
@@ -108,7 +109,7 @@ async def update_entry(
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
     row = result.data[0]
-    sync_entry_to_s3(user_id, row)
+    asyncio.ensure_future(asyncio.to_thread(sync_entry_to_s3, user_id, row))
     return row
 
 
@@ -127,4 +128,4 @@ async def delete_entry(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
-    delete_entry_from_s3(user_id, entry_id)
+    asyncio.ensure_future(asyncio.to_thread(delete_entry_from_s3, user_id, entry_id))

@@ -20,6 +20,11 @@ class DeleteAccountRequest(BaseModel):
     confirm: Optional[str] = None
 
 
+class UserPreferencesUpdate(BaseModel):
+    enabled_journal_types: Optional[list[str]] = None
+    default_journal_type: Optional[str] = None
+
+
 @router.get("/me", response_model=UserMeResponse)
 async def get_me(
     user_id: str = Depends(get_current_user),
@@ -46,6 +51,7 @@ async def get_me(
         id=user_id,
         email=getattr(user, "email", None),
         role=role,
+        tier="self",
         created_at=str(getattr(user, "created_at", None)) if user and getattr(user, "created_at", None) else None,
         last_sign_in_at=(
             str(getattr(user, "last_sign_in_at", None))
@@ -54,6 +60,37 @@ async def get_me(
         ),
         metadata=metadata,
     )
+
+
+@router.get("/me/preferences")
+async def get_my_preferences(
+    user_id: str = Depends(get_current_user),
+    supabase: AsyncClient = Depends(get_supabase),
+):
+    result = (
+        await supabase.table("users")
+        .select("enabled_journal_types,default_journal_type")
+        .eq("id", user_id)
+        .maybe_single()
+        .execute()
+    )
+    if not result.data:
+        return {"enabled_journal_types": ["personal"], "default_journal_type": "personal"}
+    return result.data
+
+
+@router.patch("/me/preferences")
+async def update_my_preferences(
+    body: UserPreferencesUpdate,
+    user_id: str = Depends(get_current_user),
+    supabase: AsyncClient = Depends(get_supabase),
+):
+    updates = body.model_dump(exclude_unset=True)
+    if not updates:
+        return {"updated": False}
+
+    await supabase.table("users").upsert({"id": user_id, **updates}).execute()
+    return {"updated": True}
 
 
 @router.delete("/me/entries")
