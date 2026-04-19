@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import time
 from functools import lru_cache
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -8,6 +10,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import PyJWKClient
+
+logger = logging.getLogger(__name__)
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -149,10 +153,28 @@ def get_current_user(
 ) -> str:
     if not credentials:
         raise _unauthorized("Missing Authorization header")
+
     token = credentials.credentials
-    algorithm = _get_token_algorithm(token)
+    t0 = time.monotonic()
 
-    if algorithm == "HS256":
-        return _decode_hs256_token(token)
+    try:
+        algorithm = _get_token_algorithm(token)
 
-    return _decode_with_jwks(token, algorithm)
+        if algorithm == "HS256":
+            if SUPABASE_JWT_SECRET:
+                path = "hs256_local"
+            else:
+                path = "hs256_remote"
+            user_id = _decode_hs256_token(token)
+        else:
+            path = f"jwks_{algorithm.lower()}"
+            user_id = _decode_with_jwks(token, algorithm)
+
+    except HTTPException:
+        elapsed = round((time.monotonic() - t0) * 1000)
+        logger.warning("auth failed path=unknown elapsed_ms=%d", elapsed)
+        raise
+
+    elapsed = round((time.monotonic() - t0) * 1000)
+    logger.debug("auth ok user_id=%s path=%s elapsed_ms=%d", user_id, path, elapsed)
+    return user_id

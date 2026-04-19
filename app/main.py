@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import acreate_client
 
 from app import db
-from app.routes import admin, entries, schema, users
+from app.routes import admin, auth, entries, schema, users
 
 
 def _require(var: str) -> str:
@@ -48,19 +48,34 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await app.state.db_pool.close()
+    if app.state.db_pool is not None:
+        await app.state.db_pool.close()
+
+
+_DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "https://localhost",
+    "https://127.0.0.1",
+    "http://127.0.0.1:3000",
+]
+
+def _cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "")
+    extra = [o.strip() for o in raw.split(",") if o.strip()]
+    return list(dict.fromkeys(_DEFAULT_CORS_ORIGINS + extra))
 
 
 app = FastAPI(title="Lumen API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(entries.router)
 app.include_router(users.router)
 app.include_router(admin.router)
@@ -69,5 +84,8 @@ app.include_router(schema.router)
 
 @app.get("/health")
 async def health(request):
-    pool_size = request.app.state.db_pool.get_size()
-    return {"status": "ok", "db_pool_size": pool_size}
+    pool = request.app.state.db_pool
+    return {
+        "status": "ok" if pool is not None else "degraded",
+        "db_pool_size": pool.get_size() if pool is not None else None,
+    }

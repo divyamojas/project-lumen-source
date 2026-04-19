@@ -1,8 +1,12 @@
+import asyncio
+import logging
 from datetime import date, timezone, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import AsyncClient
+
+logger = logging.getLogger(__name__)
 
 from app.dependencies import get_supabase, require_role, ROLE_HIERARCHY
 from app.models.admin import AdminStats, RoleUpdate, UserSummary
@@ -20,7 +24,7 @@ async def get_stats(
 ):
     today = date.today().isoformat()
 
-    total_users_res, total_entries_res, today_entries_res = await _gather(
+    total_users_res, total_entries_res, today_entries_res = await asyncio.gather(
         supabase.table("user_roles").select("user_id", count="exact").execute(),
         supabase.table("entries").select("id", count="exact").execute(),
         supabase.table("entries").select("id", count="exact").gte("createdAt", today).execute(),
@@ -42,8 +46,6 @@ async def list_users(
     supabase: AsyncClient = Depends(get_supabase),
     _: str = Depends(require_role("admin")),
 ):
-    offset = (page - 1) * page_size
-
     auth_response = await supabase.auth.admin.list_users(page=page, per_page=page_size)
     users = auth_response.users if hasattr(auth_response, "users") else []
 
@@ -169,10 +171,40 @@ async def delete_user(
     if existing.data and existing.data["role"] == "superuser":
         raise HTTPException(status_code=403, detail="Cannot delete a superuser")
 
-    # Delete entries → roles → auth user
-    await supabase.table("entries").delete().eq("user_id", target_id).execute()
-    await supabase.table("user_roles").delete().eq("user_id", target_id).execute()
-    await supabase.auth.admin.delete_user(target_id)
+    # Snapshot role before deletion for compensating write on failure
+    role_snapshot = existing.data["role"] if existing.data else "user"
+
+    # Delete entries → roles → auth user (no distributed transaction — compensate on failure)
+    entries_deleted = False
+    roles_deleted = False
+
+    try:
+        await supabase.table("entries").delete().eq("user_id", target_id).execute()
+        entries_deleted = True
+
+        await supabase.table("user_roles").delete().eq("user_id", target_id).execute()
+        roles_deleted = True
+
+        await supabase.auth.admin.delete_user(target_id)
+    except Exception as exc:
+        logger.error(
+            "delete_user partial failure target=%s entries_deleted=%s roles_deleted=%s: %s",
+            target_id,
+            entries_deleted,
+            roles_deleted,
+            exc,
+        )
+        if roles_deleted:
+            try:
+                await supabase.table("user_roles").upsert({
+                    "user_id": target_id,
+                    "role": role_snapshot,
+                    "assigned_by": caller_id,
+                    "assigned_at": datetime.now(timezone.utc).isoformat(),
+                }).execute()
+            except Exception as restore_exc:
+                logger.error("delete_user role restore failed for %s: %s", target_id, restore_exc)
+        raise HTTPException(status_code=502, detail="User deletion failed — state may be inconsistent") from exc
 
 
 # ── Entries (all users) ───────────────────────────────────────────────────────
@@ -215,9 +247,3 @@ async def delete_any_entry(
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
 
-
-# ── Internal helper ───────────────────────────────────────────────────────────
-
-async def _gather(*coroutines):
-    import asyncio
-    return await asyncio.gather(*coroutines)

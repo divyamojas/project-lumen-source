@@ -80,7 +80,7 @@ async def apply_pending_migrations(
 
     pending = [f for f in files if f["filename"] not in applied]
     if not pending:
-        raise HTTPException(status_code=200, detail="No pending migrations")
+        return await list_migrations(pool=pool, _=caller_id)
 
     for f in pending:
         await db.apply_migration(pool, f["filename"], f["sql"], applied_by=caller_id)
