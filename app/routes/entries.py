@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,10 +7,46 @@ from supabase import AsyncClient
 
 from app.auth import get_current_user
 from app.dependencies import get_supabase
-from app.models.entry import EntryCreate, EntryListResponse, EntryResponse, EntryUpdate
+from app.models.entry import (
+    EntryCreate,
+    EntryListResponse,
+    EntryResponse,
+    EntryUpdate,
+    JournalType,
+    normalize_type_metadata,
+)
 from app.services.s3_sync import delete_entry_from_s3, sync_entry_to_s3
 
 router = APIRouter(prefix="/entries", tags=["entries"])
+logger = logging.getLogger(__name__)
+
+
+async def _record_sync_audit(supabase: AsyncClient, user_id: str, result: dict, scope: str = "entry") -> None:
+    try:
+        await supabase.table("sync_audit_log").insert({
+            "user_id": user_id,
+            "entry_id": result.get("entry_id"),
+            "action": result.get("action") or "upsert",
+            "status": "success" if result.get("success") else "failed",
+            "scope": scope,
+            "bucket": result.get("bucket"),
+            "object_key": result.get("object_key"),
+            "region": result.get("region"),
+            "error_message": result.get("error"),
+            "created_at": result.get("created_at"),
+        }).execute()
+    except Exception as exc:
+        logger.warning("sync audit write failed for user=%s entry=%s: %s", user_id, result.get("entry_id"), exc)
+
+
+async def _sync_and_audit_entry(supabase: AsyncClient, user_id: str, entry: dict) -> None:
+    result = await asyncio.to_thread(sync_entry_to_s3, user_id, entry)
+    await _record_sync_audit(supabase, user_id, result)
+
+
+async def _delete_and_audit_entry(supabase: AsyncClient, user_id: str, entry_id: str) -> None:
+    result = await asyncio.to_thread(delete_entry_from_s3, user_id, entry_id)
+    await _record_sync_audit(supabase, user_id, result)
 
 
 @router.post("", response_model=EntryResponse, status_code=201)
@@ -21,7 +58,7 @@ async def create_entry(
     data = {**entry.model_dump(), "user_id": user_id}
     result = await supabase.table("entries").insert(data).execute()
     row = result.data[0]
-    asyncio.ensure_future(asyncio.to_thread(sync_entry_to_s3, user_id, row))
+    asyncio.create_task(_sync_and_audit_entry(supabase, user_id, row))
     return row
 
 
@@ -98,7 +135,25 @@ async def update_entry(
     supabase: AsyncClient = Depends(get_supabase),
     user_id: str = Depends(get_current_user),
 ):
+    current_entry_result = (
+        await supabase.table("entries")
+        .select("journal_type")
+        .eq("id", entry_id)
+        .eq("user_id", user_id)
+        .maybe_single()
+        .execute()
+    )
+    if not current_entry_result.data:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
     updates = patch.model_dump(exclude_unset=True)
+    effective_journal_type = JournalType(
+        updates.get("journal_type") or current_entry_result.data.get("journal_type") or JournalType.personal.value
+    )
+    if "type_metadata" in updates:
+        updates["type_metadata"] = normalize_type_metadata(effective_journal_type, updates["type_metadata"])
+    if "journal_type" in updates and "type_metadata" not in updates:
+        updates["type_metadata"] = {}
     result = (
         await supabase.table("entries")
         .update(updates)
@@ -109,7 +164,7 @@ async def update_entry(
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
     row = result.data[0]
-    asyncio.ensure_future(asyncio.to_thread(sync_entry_to_s3, user_id, row))
+    asyncio.create_task(_sync_and_audit_entry(supabase, user_id, row))
     return row
 
 
@@ -128,4 +183,4 @@ async def delete_entry(
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Entry not found")
-    asyncio.ensure_future(asyncio.to_thread(delete_entry_from_s3, user_id, entry_id))
+    asyncio.create_task(_delete_and_audit_entry(supabase, user_id, entry_id))

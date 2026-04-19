@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import re
 from datetime import date, timezone, datetime
 from typing import Any, Optional
@@ -32,6 +33,18 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _GENERIC_DATA_ALLOWED_SCHEMAS = {"public"}
 _GENERIC_DATA_DENYLIST = {"schema_migrations", "sql_audit_log", "admin_api_audit_log"}
+
+
+def _generic_admin_data_enabled() -> bool:
+    return os.getenv("ENABLE_GENERIC_DATA_ADMIN", "false").lower() == "true"
+
+
+def _require_generic_admin_data_enabled() -> None:
+    if not _generic_admin_data_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Generic admin data APIs are disabled for this deployment",
+        )
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────
@@ -539,6 +552,7 @@ async def list_data_tables(
     include_system: bool = Query(default=False),
     _: str = Depends(require_role("superuser")),
 ):
+    _require_generic_admin_data_enabled()
     snapshot = getattr(request.app.state, "schema_snapshot", None)
     if snapshot is None:
         snapshot = {}
@@ -558,6 +572,7 @@ async def query_table_rows(
 ):
     import asyncpg
 
+    _require_generic_admin_data_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
@@ -622,6 +637,7 @@ async def insert_table_row(
 ):
     import asyncpg
 
+    _require_generic_admin_data_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
@@ -675,6 +691,7 @@ async def patch_table_rows(
 ):
     import asyncpg
 
+    _require_generic_admin_data_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
@@ -729,6 +746,7 @@ async def delete_table_rows(
 ):
     import asyncpg
 
+    _require_generic_admin_data_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-04-19T18:10:16.655831+00:00",
+  "captured_at": "2026-04-19T18:55:06.391386+00:00",
   "tables": {
     "auth.audit_log_entries": {
       "schema": "auth",
@@ -3233,6 +3233,117 @@
           "name": "sql_audit_log_pkey",
           "constraint_type": "PRIMARY KEY",
           "definition": "PRIMARY KEY (id)"
+        }
+      ],
+      "triggers": [],
+      "policies": []
+    },
+    "public.sync_audit_log": {
+      "schema": "public",
+      "name": "sync_audit_log",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "entry_id",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": "'entry'::text"
+        },
+        {
+          "name": "bucket",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "object_key",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "region",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "udt_name": "timestamptz",
+          "nullable": false,
+          "default": "now()"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "sync_audit_log_pkey",
+          "definition": "CREATE UNIQUE INDEX sync_audit_log_pkey ON public.sync_audit_log USING btree (id)"
+        },
+        {
+          "name": "sync_audit_log_status_idx",
+          "definition": "CREATE INDEX sync_audit_log_status_idx ON public.sync_audit_log USING btree (status)"
+        },
+        {
+          "name": "sync_audit_log_user_created_idx",
+          "definition": "CREATE INDEX sync_audit_log_user_created_idx ON public.sync_audit_log USING btree (user_id, created_at DESC)"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "sync_audit_log_pkey",
+          "constraint_type": "PRIMARY KEY",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "sync_audit_log_user_id_fkey",
+          "constraint_type": "FOREIGN KEY",
+          "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
         }
       ],
       "triggers": [],

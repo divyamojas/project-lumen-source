@@ -1,17 +1,18 @@
 # Lumen — Backend
 
-> **Your journal. Your AWS. Your AI.**
-> A private, calm journal suite where your data lives on your own cloud —
+> **Your journal. Private backup. Future AI.**
+> A private, calm journal suite where your data stays under your Lumen deployment —
 > and where AI works *on your data*, not on someone else's servers.
 
 Lumen is a journaling suite for six use cases: personal reflection, science
 and research logging, travel, fitness, work, and creative writing. Each type
-gets purpose-built fields and prompts. All entries sync to your own AWS S3
-bucket. An AI layer (in progress) will let you query your journal in natural
-language using Bedrock — without your data ever leaving your infrastructure.
+gets purpose-built fields and prompts. Entries can be backed up to an
+AWS S3 bucket configured for the Lumen deployment. An AI layer (in progress)
+will let you query your journal in natural language using Bedrock.
 
-**Status:** Phase 1 (core journaling) complete. Phase 2 (S3 sync) in progress.
-Phases 3–5 (Bedrock, NL query, sentiment) on the roadmap.
+**Status:** Phase 1 (core journaling) is usable but still being hardened.
+Phase 2 (deployment-managed S3 backup) is partially implemented and still in progress.
+Phases 3–5 (Bedrock, NL query, sentiment) remain on the roadmap.
 
 ---
 
@@ -33,6 +34,10 @@ Phases 3–5 (Bedrock, NL query, sentiment) on the roadmap.
 
 ### User
 - `GET /users/me`
+- `GET /users/me/preferences`
+- `PATCH /users/me/preferences`
+- `DELETE /users/me/entries`
+- `DELETE /users/me`
 - `GET /health`
 
 ### Entries
@@ -41,6 +46,10 @@ Phases 3–5 (Bedrock, NL query, sentiment) on the roadmap.
 - `GET /entries/{id}`
 - `PATCH /entries/{id}`
 - `DELETE /entries/{id}`
+
+### Backup
+- `GET /sync/status`
+- `POST /sync/full`
 
 ### Admin (admin role required)
 - `GET /admin/stats`
@@ -90,6 +99,13 @@ Optional:
 - `SUPABASE_JWKS_URL`
 - `BOOTSTRAP_SUPERUSER_ID`
 - `PASSWORD_RESET_REDIRECT_TO`
+- `S3_SYNC_ENABLED`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `S3_BUCKET_NAME`
+- `ENABLE_ADMIN_SQL`
+- `ENABLE_GENERIC_DATA_ADMIN`
 
 ## Auth Contract
 
@@ -131,7 +147,7 @@ migrations/
 
 ## Planned Phases
 
-- Phase 2: Auto-push entries to AWS S3 on save
+- Phase 2: Deployment-managed S3 backup on save, plus better operator visibility
 - Phase 3: S3 event trigger to Lambda and Bedrock Knowledge Base sync
 - Phase 4: In-app natural language query over journal entries
 - Phase 5: Sentiment detection with AWS Comprehend to auto-set entry theme

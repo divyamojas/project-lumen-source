@@ -1,4 +1,5 @@
 import asyncpg
+import os
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app import db
@@ -6,6 +7,18 @@ from app.dependencies import require_role
 from app.models.schema import MigrationRecord, SchemaSnapshot, SQLRequest, SQLResponse
 
 router = APIRouter(prefix="/admin", tags=["admin-schema"])
+
+
+def _admin_sql_enabled() -> bool:
+    return os.getenv("ENABLE_ADMIN_SQL", "false").lower() == "true"
+
+
+def require_admin_sql_enabled() -> None:
+    if not _admin_sql_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Raw SQL access is disabled for this deployment",
+        )
 
 
 def get_pool(request: Request) -> asyncpg.Pool:
@@ -104,6 +117,8 @@ async def run_sql(
     pool: asyncpg.Pool = Depends(get_pool),
     caller_id: str = Depends(require_role("superuser")),
 ):
+    require_admin_sql_enabled()
+
     if not body.query.strip():
         raise HTTPException(status_code=422, detail="Query must not be empty")
 

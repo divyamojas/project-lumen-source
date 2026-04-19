@@ -8,20 +8,20 @@ Lumen Privacy Policy — Last updated: 2026-04-19
 
 Data we collect:
 - Your journal entries (title, body, metadata)
-- Your email address and hashed password for authentication
+- Your email address and authentication metadata managed through Supabase Auth
 - Your IP address in server logs (retained 30 days)
 
 How we use your data:
 - To provide the journaling service
-- To sync your entries to your personal AWS S3 bucket (if enabled)
+- To back up your entries to the AWS S3 bucket configured for this Lumen deployment (if enabled)
 - We do not sell, share, or use your data for advertising
 
 Your rights:
 - Delete your account and all entries: Settings → Account → Delete Account
 - Export your data: Settings → Export
-- Data is stored in ap-south-1 only
+- Ask the operator of this Lumen deployment where the backing infrastructure is hosted
 
-Contact: support@lumen.app
+Contact: contact the operator of your Lumen deployment
 """
 
 _TERMS_OF_USE = """\
