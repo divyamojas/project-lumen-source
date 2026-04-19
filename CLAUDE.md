@@ -100,6 +100,11 @@ User routes:
 - `/users/me`
 - `/health`
 
+`GET /health` should return `200` and currently reports:
+- `status: "ok"` when `app.state.db_pool` exists
+- `status: "degraded"` when the app booted without a DB pool
+- `db_pool_size` when a pool is available
+
 Admin routes currently used by the frontend:
 - `GET /admin/stats`
 - `GET /admin/users`
@@ -132,6 +137,7 @@ These are intentionally powerful and should remain `superuser` only.
 - `schema_migrations` tracks applied files and checksums
 - `POST /admin/schema/migrations/apply` applies all pending files in order
 - schema refresh and SQL execution also refresh the cached schema snapshot when possible
+- startup caches the latest schema snapshot in `app.state.schema_snapshot`
 - raw SQL can change anything the connected Postgres role is allowed to change
 
 ## Raw SQL

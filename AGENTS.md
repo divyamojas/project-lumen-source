@@ -11,7 +11,7 @@ It now powers the live frontend for backend-managed auth, entry CRUD, RBAC, sche
 - No ORM, no TypeScript, no local installs
 
 ## File Map
-- `app/main.py` — app setup, CORS, lifespan, schema snapshot cache, router registration
+- `app/main.py` — app setup, CORS, lifespan, schema snapshot cache, `/health`, router registration
 - `app/auth.py` — JWT verification
 - `app/db.py` — asyncpg pool, snapshot, migrations, raw SQL
 - `app/dependencies.py` — shared dependencies and role checks
@@ -49,6 +49,7 @@ Current frontend-facing auth:
 - `/auth/google/start` and aliases
 - `/auth/logout`
 - `/users/me`
+- `/health`
 
 Current frontend-facing admin:
 - `/admin/stats`
@@ -89,6 +90,7 @@ Useful optional vars:
 - Return 404, not 403, for owned-resource-not-found
 - Return 401 for missing or invalid JWT
 - Treat superuser admin/data endpoints as dangerous and keep them guarded
+- Keep `/health` lightweight and safe for root-stack readiness checks
 
 ## Out of Scope
 - Frontend wiring details
