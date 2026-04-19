@@ -1,5 +1,6 @@
 import asyncpg
 import os
+import re
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app import db
@@ -13,12 +14,31 @@ def _admin_sql_enabled() -> bool:
     return os.getenv("ENABLE_ADMIN_SQL", "false").lower() == "true"
 
 
+def _admin_sql_write_enabled() -> bool:
+    return os.getenv("ENABLE_ADMIN_SQL_WRITES", "false").lower() == "true"
+
+
 def require_admin_sql_enabled() -> None:
     if not _admin_sql_enabled():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Raw SQL access is disabled for this deployment",
         )
+
+
+def require_admin_sql_write_enabled() -> None:
+    if not _admin_sql_write_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Mutating admin SQL is disabled for this deployment",
+        )
+
+
+def is_read_only_sql(query: str) -> bool:
+    cleaned = re.sub(r"/\*.*?\*/", " ", query, flags=re.S)
+    cleaned = re.sub(r"--.*?$", " ", cleaned, flags=re.M)
+    statement = cleaned.lstrip().lower()
+    return statement.startswith("select") or statement.startswith("show") or statement.startswith("explain")
 
 
 def get_pool(request: Request) -> asyncpg.Pool:
@@ -121,6 +141,9 @@ async def run_sql(
 
     if not body.query.strip():
         raise HTTPException(status_code=422, detail="Query must not be empty")
+
+    if not is_read_only_sql(body.query):
+        require_admin_sql_write_enabled()
 
     try:
         result = await db.execute_sql(pool, body.query)

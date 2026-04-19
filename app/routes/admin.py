@@ -39,11 +39,23 @@ def _generic_admin_data_enabled() -> bool:
     return os.getenv("ENABLE_GENERIC_DATA_ADMIN", "false").lower() == "true"
 
 
+def _generic_admin_data_write_enabled() -> bool:
+    return os.getenv("ENABLE_GENERIC_DATA_ADMIN_WRITES", "false").lower() == "true"
+
+
 def _require_generic_admin_data_enabled() -> None:
     if not _generic_admin_data_enabled():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Generic admin data APIs are disabled for this deployment",
+        )
+
+
+def _require_generic_admin_data_write_enabled() -> None:
+    if not _generic_admin_data_write_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Generic admin data write APIs are disabled for this deployment",
         )
 
 
@@ -638,6 +650,7 @@ async def insert_table_row(
     import asyncpg
 
     _require_generic_admin_data_enabled()
+    _require_generic_admin_data_write_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
@@ -692,6 +705,7 @@ async def patch_table_rows(
     import asyncpg
 
     _require_generic_admin_data_enabled()
+    _require_generic_admin_data_write_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
@@ -747,6 +761,7 @@ async def delete_table_rows(
     import asyncpg
 
     _require_generic_admin_data_enabled()
+    _require_generic_admin_data_write_enabled()
     schema_name = _validate_identifier(schema_name, "schema name")
     table_name = _validate_identifier(table_name, "table name")
     _assert_manageable_table(schema_name, table_name)
