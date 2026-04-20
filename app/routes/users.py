@@ -104,16 +104,26 @@ async def get_my_preferences(
     user_id: str = Depends(get_current_user),
     supabase: AsyncClient = Depends(get_supabase),
 ):
-    result = (
-        await supabase.table("users")
-        .select("enabled_journal_types,default_journal_type")
-        .eq("id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    if not result.data:
+    try:
+        result = (
+            await supabase.table("users")
+            .select("enabled_journal_types,default_journal_type")
+            .eq("id", user_id)
+            .maybe_single()
+            .execute()
+        )
+    except Exception as exc:
+        logger.error("preferences fetch failed for %s: %r", user_id, exc)
+        raise HTTPException(status_code=500, detail=f"preferences fetch failed: {exc}")
+
+    if not result or not result.data:
         return UserPreferences()
-    return UserPreferences(**result.data)
+
+    try:
+        return UserPreferences(**result.data)
+    except Exception as exc:
+        logger.error("preferences parse failed for %s data=%r: %r", user_id, result.data, exc)
+        return UserPreferences()
 
 
 @router.patch("/me/preferences", response_model=UserPreferences)
@@ -122,14 +132,24 @@ async def update_my_preferences(
     user_id: str = Depends(get_current_user),
     supabase: AsyncClient = Depends(get_supabase),
 ):
-    existing = (
-        await supabase.table("users")
-        .select("enabled_journal_types,default_journal_type")
-        .eq("id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    current_preferences = UserPreferences(**existing.data) if existing.data else UserPreferences()
+    try:
+        existing = (
+            await supabase.table("users")
+            .select("enabled_journal_types,default_journal_type")
+            .eq("id", user_id)
+            .maybe_single()
+            .execute()
+        )
+    except Exception as exc:
+        logger.error("preferences read failed for %s: %r", user_id, exc)
+        raise HTTPException(status_code=500, detail=f"preferences read failed: {exc}")
+
+    try:
+        current_preferences = UserPreferences(**existing.data) if existing and existing.data else UserPreferences()
+    except Exception as exc:
+        logger.error("preferences parse failed for %s data=%r: %r", user_id, existing.data, exc)
+        current_preferences = UserPreferences()
+
     updates = body.model_dump(exclude_unset=True)
     if not updates:
         return current_preferences
@@ -145,11 +165,16 @@ async def update_my_preferences(
         ),
     )
 
-    await supabase.table("users").upsert({
-        "id": user_id,
-        "enabled_journal_types": [item.value for item in merged_preferences.enabled_journal_types],
-        "default_journal_type": merged_preferences.default_journal_type.value,
-    }).execute()
+    try:
+        await supabase.table("users").upsert({
+            "id": user_id,
+            "enabled_journal_types": [item.value for item in merged_preferences.enabled_journal_types],
+            "default_journal_type": merged_preferences.default_journal_type.value,
+        }).execute()
+    except Exception as exc:
+        logger.error("preferences upsert failed for %s: %r", user_id, exc)
+        raise HTTPException(status_code=500, detail=f"preferences save failed: {exc}")
+
     return merged_preferences
 
 

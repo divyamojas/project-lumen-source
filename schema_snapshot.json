@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-04-19T18:55:06.391386+00:00",
+  "captured_at": "2026-04-20T03:00:20.778888+00:00",
   "tables": {
     "auth.audit_log_entries": {
       "schema": "auth",
